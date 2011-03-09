@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>fileTriggers</key>
+        <dict>
+            <key>404</key>
+            <string>public\404.html</string>
+            <key>500</key>
+            <string>public\500.html</string>
+            <key>client.pm</key>
+            <string>..\leadpile\cgi-bin\manage_leads\shared\Leadpile\Client.pm</string>
+            <key>deve</key>
+            <string>environments\development.yml</string>
+            <key>inde</key>
+            <string>views\index.tt</string>
+            <key>main</key>
+            <string>views\layouts\main.tt</string>
+            <key>radio.pm</key>
+            <string>lib\radio.pm</string>
+        </dict>
+    </dict>
+</plist>

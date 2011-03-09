@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Eat a Brick Radio</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <div id="header">
+      <h1>Eat a Brick Radio</h1>
+      <a id="playing" href="/listen" title="Listen">
+        <% now_playing %> <img src="/speaker.png" alt="Listen" />
+      </a>
+      <% include '_nav.tt' %>
+    </div>
+    
+    <div id="body">
+      <ul id="flash">
+        <% foreach message in session.flash.keys %>
+          <li class="<% session.flash.item(message) %>"><% message %></li>
+          <% session.flash.delete(message) %>
+        <% end %>
+      </ul>
+      
+      <% content %>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,75 @@
+package Radio::Schema::Result::Queue;
+
+# Created by DBIx::Class::Schema::Loader
+# DO NOT MODIFY THE FIRST PART OF THIS FILE
+
+use strict;
+use warnings;
+
+use base 'DBIx::Class::Core';
+
+
+=head1 NAME
+
+Radio::Schema::Result::Queue
+
+=cut
+
+__PACKAGE__->table("queue");
+
+=head1 ACCESSORS
+
+=head2 id
+
+  data_type: 'integer'
+  is_auto_increment: 1
+  is_nullable: 0
+
+=head2 song_id
+
+  data_type: 'integer'
+  is_foreign_key: 1
+  is_nullable: 0
+
+=head2 position
+
+  data_type: 'integer'
+  is_nullable: 0
+
+=cut
+
+__PACKAGE__->add_columns(
+  "id",
+  { data_type => "integer", is_auto_increment => 1, is_nullable => 0 },
+  "song_id",
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
+  "position",
+  { data_type => "integer", is_nullable => 0 },
+);
+__PACKAGE__->set_primary_key("id");
+__PACKAGE__->add_unique_constraint("position_unique", ["position"]);
+
+=head1 RELATIONS
+
+=head2 song
+
+Type: belongs_to
+
+Related object: L<Radio::Schema::Result::Song>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "song",
+  "Radio::Schema::Result::Song",
+  { song_id => "song_id" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07010 @ 2011-03-07 18:53:02
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:oriw4Y5/PR51fvule9kO5w
+
+__PACKAGE__->belongs_to(song => 'Radio::Schema::Result::Song', 'song')
+
+1;

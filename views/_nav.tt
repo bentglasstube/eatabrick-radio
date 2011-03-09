@@ -1,0 +1,18 @@
+<% macro link(uri, text) block -%>
+  <% current = '' -%>
+  <% current = 'current' IF uri == request.path_info -%>
+  <li class="<% current %>"><a href="<% uri %>"><% text %></a></li>
+<% end -%>
+
+<ul id="navigation">
+  <% link('/', 'News') %>
+  <% link('/request', 'Request') %>
+  <% if session.user %>
+    <% link('/admin/queue', 'Queue') %>
+    <% link('/admin/upload', 'Upload') %>
+    <% link('/admin/songs', 'Songs') %>
+    <% link('/logout', 'Log out') %>
+  <% else %>
+    <% link('/login', 'Log In') %>
+  <% END %>
+</ul>

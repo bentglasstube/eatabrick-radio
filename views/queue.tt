@@ -1,0 +1,6 @@
+<h2>Queue</h2>
+<% include _songtable.tt
+  songlist = songs
+  custom.header = 'Position'
+  custom.data = queuedata
+%>
