@@ -6,10 +6,12 @@
   </head>
   <body>
     <div id="header">
+      <div id="playing">
+        <audio src="<% stream_uri %>" controls>
+          <a href="<% stream_uri %>" title="listen"><% now_playing %></a>
+        </audio>
+      </div>
       <h1>Eat a Brick Radio</h1>
-      <a id="playing" href="/listen" title="Listen">
-        <% now_playing %> <img src="/speaker.png" alt="Listen" />
-      </a>
       <% include '_nav.tt' %>
     </div>
     

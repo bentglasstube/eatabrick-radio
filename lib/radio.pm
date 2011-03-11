@@ -61,12 +61,12 @@ before_template sub {
   my ($tokens) = @_;
   
   $tokens->{now_playing} = 'test';
+  $tokens->{stream_uri} = setting('stream_uri');
   # schema->resultset('Queue')->find({ position => 0 })->song->title;
 };
 
 # public interface
 get  '/'        => sub { template 'news' };
-get  '/listen'  => sub { redirect setting 'stream_uri' };
 get  '/request' => sub { template 'request' };
 post '/request' => \&do_request;
 
@@ -92,7 +92,7 @@ sub do_login {
   if (my $user = authenticate(params->{name}, params->{pass})) {
     flash 'Welcome, ' . $user->name . '.';
 
-    my $uri = session('requested_page') || '/admin';
+    my $uri = session('requested_page') || '/';
     
     session(requested_page => undef);
     session(user => $user);

@@ -114,3 +114,7 @@ thead td {
   font-weight: bold;
   background: #df0;
 }
+
+p {
+  margin-bottom: 0.5em;
+}

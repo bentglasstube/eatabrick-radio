@@ -1,0 +1,11 @@
+<h2>Songs</h2>
+
+<form method="get" action="/admin/songs">
+  <fieldset>
+    <label for="q">Search:</label>
+    <input type="test" name="q" value="<% params.q %>" id="q" />
+    <input type="submit"value="Search" />
+  </fieldset>
+</form>
+
+<% include _songtable.tt %>
