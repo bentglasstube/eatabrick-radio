@@ -4,8 +4,7 @@ use strict;
 use warnings;
 
 use Dancer ':syntax';
-use Dancer::Plugin::DBIC;
-
+use Dancer::Plugin::Database;
 use Digest::SHA1 'sha1_base64';
 
 our $VERSION = '0.1';
@@ -37,58 +36,70 @@ sub digest {
 sub authenticate {
   my ($name, $password) = @_;
   
-  my $user = schema->resultset('User')->find({name => $name}) or return undef;
-  
-  if ($user->pass eq digest($user->salt, $password)) {
+  my $sth = database->prepare_cached('select * from user where name = ?');
+  $sth->execute($name);
+
+  my $user = $sth->fetchrow_hashref or return undef;
+
+  $sth->finish();
+
+  if ($user->{pass} eq digest($user->{salt}, $password)) {
     return $user;
   } else {
     return undef;
   }
 }
 
-sub search {
-  my ($set, $attribute, $value) = @_;
-  
-  my @results = schema->resultset($set)->search({
-    $attribute, { like => "%$value%" }
-  });
-}
-
-# Routes
-before sub { require_login if request->path_info =~ m{^/admin} };
-before_template sub {
-  # add now playing song to each request
-  my ($tokens) = @_;
-  
-  $tokens->{now_playing} = 'test';
-  $tokens->{stream_uri} = setting('stream_uri');
-  # schema->resultset('Queue')->find({ position => 0 })->song->title;
+before sub { 
+  require_login if request->path_info =~ m{^/admin} 
 };
 
-# public interface
-get  '/'        => sub { template 'news' };
-get  '/request' => sub { template 'request' };
-post '/request' => \&do_request;
+before_template sub {
+  my $tokens = shift;
+  
+  my $sth = database->prepare_cached(q{
+    select song.title
+    from queue
+    inner join song on queue.song_id = song.id
+    where queue.position = 0
+  });
+  $sth->execute();
+  
+  $tokens->{now_playing} = ($sth->fetchrow_array())[0];
 
-# session management
-get  '/login'   => sub { template 'login' };
-get  '/logout'  => \&do_logout;
-post '/login'   => \&do_login;
+  $sth->finish();
+};
 
-# administrative interface
-prefix '/admin';
-get  '/queue'   => sub { template 'queue' };
-get  '/songs'   => sub { template 'songs' };
-get  '/upload'  => sub { template 'upload' };
-get  '/post'    => sub { template 'post' };
+get '/' => sub { 
+  template 'news';
+};
 
-# default route (404)
-prefix undef;
-any qr{.*} => sub { status 'not_found'; template '404' };
+get '/request' => sub { 
+  my $sth = database->prepare_cached(q{
+    select song.*
+    from song
+    where title like ?
+  });
+  
+  my $songs = [];
 
-# handlers
+  if (params->{q}) {
+    $sth->execute('%' . params->{q} . '%');
+    $songs = $sth->fetchall_arrayref({});
+    $sth->finish();
+  }
 
-sub do_login {
+  template 'request', { songs => $songs };
+};
+
+post '/request' => sub {
+};
+
+get '/login' => sub { 
+  template 'login' 
+};
+
+get '/logout' => sub {
   if (my $user = authenticate(params->{name}, params->{pass})) {
     flash 'Welcome, ' . $user->name . '.';
 
@@ -102,16 +113,34 @@ sub do_login {
     flash error => 'Invalid credentials.';
     redirect '/login';
   }
-}
+};
 
-sub do_logout {
+post '/login' => sub {
   session(user => undef);
   flash 'You have been logged out.';
   redirect '/';
-}
+};
 
-sub do_request {
-  
-}
+prefix '/admin';
+
+get '/queue' => sub { 
+  template 'queue';
+};
+
+get '/songs' => sub { 
+  template 'songs';
+};
+
+get '/upload' => sub { 
+  template 'upload';
+};
+
+get '/post' => sub { 
+  template 'post';
+};
+
+# default route (404)
+prefix undef;
+any qr{.*} => sub { status 'not_found'; template '404' };
 
 true;

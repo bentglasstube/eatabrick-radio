@@ -2,14 +2,14 @@
 <html>
   <head>
     <title>Eat a Brick Radio</title>
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <div id="header">
       <div id="playing">
-        <audio src="<% stream_uri %>" controls>
+        <!-- audio src="<% stream_uri %>" controls -->
           <a href="<% stream_uri %>" title="listen"><% now_playing %></a>
-        </audio>
+        <!-- /audio -->
       </div>
       <h1>Eat a Brick Radio</h1>
       <% include '_nav.tt' %>

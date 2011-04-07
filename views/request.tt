@@ -12,7 +12,9 @@
 
 <% if params.q %>
   <h2>Results</h2>
-  <% include _songtable.tt songs = schema.resultset('Song').search({
-    title => { like => '%' _ params.q _ '%' }
-  }) %>
+  <% if songs.size > 0 %>
+    <% include _songtable.tt songs = songs %>
+  <% else %>
+    <p class="empty">There are no matching songs.</p>
+  <% end %>
 <% end %>

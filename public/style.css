@@ -118,3 +118,8 @@ thead td {
 p {
   margin-bottom: 0.5em;
 }
+
+p.empty {
+  font-style: oblique;
+}
+

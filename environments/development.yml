@@ -1,0 +1,13 @@
+salt_key: faj349034f9ja0ds9jf
+logger: console
+log: debug
+session: simple
+
+plugins:
+  Database:
+    driver: SQLite
+    database: test.db
+    dbi_params:
+      RaiseError: 1
+      AutoCommit: 1
+

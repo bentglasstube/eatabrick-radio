@@ -1,7 +1,7 @@
 delete from user;
 
 insert into user (name, salt, pass) values 
-  ('alan', 'qEWBTdbFUs+e/c7ATO3deoK+rzc', 'ujUDARh4xQZcXfGCBKz+HjBjCw4');
+  ('alan', 'qEWBTdbFUs+e/c7ATO3deoK+rzc', 'yyh2afn36PGhBbpolbP7w/gVSYc');
 
 delete from song;
 
