@@ -2,6 +2,7 @@ salt_key: faj349034f9ja0ds9jf
 logger: console
 log: debug
 session: simple
+show_errors: 1
 
 plugins:
   Database:

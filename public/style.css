@@ -91,6 +91,10 @@ fieldset {
   margin-bottom: 1em;
 }
 
+td fieldset {
+  margin-bottom: 0;
+}
+
 fieldset dd {
   margin-bottom: 0.5em;
 }
@@ -98,6 +102,15 @@ fieldset dd {
 input[type=submit] {
   font-weight: bold;
   padding: 0.1em 0.5em;
+}
+
+td input[type=submit] {
+  font-weight: normal;
+  border: none;
+  cursor: pointer;
+  background: none;
+  color: #14f;
+  font-size: 1em;
 }
 
 table {
@@ -121,5 +134,10 @@ p {
 
 p.empty {
   font-style: oblique;
+}
+
+a {
+  color: #14f;
+  text-decoration: none;
 }
 

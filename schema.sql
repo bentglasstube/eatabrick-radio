@@ -9,7 +9,7 @@ create table if not exists song (
   id integer primary key,
   title varchar(100) not null default '',
   path varchar(255) not null default '' constraint unique_song_path unique, 
-  last_played char(19) not null default '2011-03-07 00:00:00'
+  last_played integer not null default 0
 );
 
 create table if not exists queue (

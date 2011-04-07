@@ -13,7 +13,27 @@
 <% if params.q %>
   <h2>Results</h2>
   <% if songs.size > 0 %>
-    <% include _songtable.tt songs = songs %>
+    <table>
+      <thead>
+        <tr><td>Title</td><td>Last Played</td><td></td></tr>
+      </thead>
+      <tbody>
+        <% foreach song in songs %>
+          <tr>
+            <td><% song.title %></td>
+            <td><% song.ago %></td>
+            <td>
+              <form method="post" action="/request">
+                <fieldset>
+                  <input type="hidden" name="id" value="<% song.id %>" />
+                  <input type="submit" value="Request" />
+                </fieldset>
+              </form>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
   <% else %>
     <p class="empty">There are no matching songs.</p>
   <% end %>

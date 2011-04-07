@@ -5,15 +5,15 @@ insert into user (name, salt, pass) values
 
 delete from song;
 
-insert into song (title, path) values ('Song 1', '1'); 
-insert into song (title, path) values ('Song 2', '2');
-insert into song (title, path) values ('Song 3', '3');
-insert into song (title, path) values ('Song 4', '4');
-insert into song (title, path) values ('Song 5', '5');
-insert into song (title, path) values ('Song 6', '6');
-insert into song (title, path) values ('Song 7', '7');
-insert into song (title, path) values ('Song 8', '8');
-insert into song (title, path) values ('Song 9', '9');
+insert into song (title, path, last_played) values ('Song 1', '1', 1200000000); 
+insert into song (title, path, last_played) values ('Song 2', '2', 1290000000);
+insert into song (title, path, last_played) values ('Song 3', '3', 1300000000);
+insert into song (title, path, last_played) values ('Song 4', '4', 1301000000);
+insert into song (title, path, last_played) values ('Song 5', '5', 1302000000);
+insert into song (title, path, last_played) values ('Song 6', '6', 1302100000);
+insert into song (title, path, last_played) values ('Song 7', '7', 1302180000);
+insert into song (title, path, last_played) values ('Song 8', '8', 1302183000);
+insert into song (title, path, last_played) values ('Song 9', '9', 1302183600);
 
 delete from queue;
 
