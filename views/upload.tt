@@ -4,7 +4,7 @@
   also upload an archive full of songs and all of them will be processed and 
   added to the station.
 </p>
-<form method="post" action="/admin/upload" enctype="multipart/form-data">
+<form method="post" action="/upload" enctype="multipart/form-data">
   <fieldset>
     <input type="file" name="upload" id="upload" />
     <input type="submit" value="Upload" />

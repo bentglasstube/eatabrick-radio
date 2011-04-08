@@ -5,7 +5,7 @@ use warnings;
 
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
-use POSIX qw(ceil);
+use POSIX qw(ceil floor);
 use Digest::SHA1 'sha1_base64';
 
 our $VERSION = '0.1';
@@ -34,10 +34,16 @@ sub digest {
   return sha1_base64(join '::', $salt, setting('salt_key'), $value);
 }
 
+sub query {
+  my $sql = shift;
+
+  database->prepare_cached(sprintf($sql, @_));
+}
+
 sub authenticate {
   my ($name, $password) = @_;
   
-  my $sth = database->prepare_cached('select * from user where name = ?');
+  my $sth = query('select * from user where name = ?');
   $sth->execute($name);
 
   my $user = $sth->fetchrow_hashref or return undef;
@@ -82,14 +88,10 @@ sub ago {
   return sprintf('%u %s%s ago', $count, $unit, $count > 1 ? 's' : '');
 }
 
-before sub { 
-  require_login if request->path_info =~ m{^/admin} 
-};
-
 before_template sub {
   my $tokens = shift;
   
-  my $sth = database->prepare_cached(q{
+  my $sth = query(q{
     select song.title
     from queue
     inner join song on queue.song_id = song.id
@@ -106,47 +108,60 @@ get '/' => sub {
   template 'news';
 };
 
-get '/request' => sub { 
-  my $sth = database->prepare_cached(q{
-    select * 
-    from song 
-    where title like ?
-    order by title asc
-  });
-  
-  my $songs = [];
+get '/songs' => sub {
+  my @constraints = ();
+  my @params = ();
 
   if (params->{q}) {
-    $sth->execute('%' . params->{q} . '%');
-    $songs = $sth->fetchall_arrayref({});
-    $sth->finish();
+    push @constraints, 'title like ?';
+    push @params, '%' . params->{q}, '%';
   }
+
+  if (params->{queue}) {
+    push @constraints, 'queue.position is not null';
+  }
+
+  my $constraints = join(' and ', @constraints) || 1;
+
+  my $sth_count = query(q{
+    select count(song.id)
+    from song
+    left join queue on queue.song_id = song.id
+    where %s
+  }, $constraints);
+
+  my $sth_data = query(q{
+    select song.id, song.title, song.last_played, queue.position 
+    from song 
+    left join queue on queue.song_id = song.id
+    where %s
+    order by title asc
+    limit ?, ?
+  }, $constraints);
+
+  $sth_count->execute(@params);
+  my ($count) = $sth_count->fetchrow_array();
+  $sth_count->finish();
+
+  push @params, 5 * ((params->{page} || 1) - 1), 5;
+
+  $sth_data->execute(@params);
+  my $songs = $sth_data->fetchall_arrayref({});
+  $sth_data->finish();
 
   $_->{ago} = ago($_->{last_played}) for @$songs;
 
-  template 'request', { songs => $songs };
+  template 'songs', { 
+    songs => $songs,
+    pager => {
+      current => params->{page} || 1,
+      last => floor($count / 5),
+    }, 
+  };
 };
 
-post '/request' => sub {
-  my $sth = database->prepare_cached('select * from song where id = ?');
-
-  $sth->execute(params->{id});
-
-  if (my $song = $sth->fetchrow_hashref()) {
-    my $ago = time - $song->{last_played};
-    if ($ago < 3600) {
-      flash error => 'That song has been played too recently.';
-    } else {
-      # enqueue_song
-      flash 'Song added to queue.';
-    }
-  } else {
-    flash error => 'Invalid song.';
-  }
-  
-  $sth->finish();
-
-  redirect '/request';
+get '/upload' => sub { 
+  template 'upload';
 };
 
 get '/login' => sub { 
@@ -175,51 +190,7 @@ get '/logout' => sub {
   redirect '/';
 };
 
-prefix '/admin';
-
-get '/queue' => sub { 
-  my $sth = database->prepare_cached(q{
-    select queue.position, song.id, song.title
-    from queue
-    inner join song on queue.song_id = song.id
-    order by queue.position asc
-  });
-
-  $sth->execute();
-  my $queue = $sth->fetchall_arrayref({});
-  $sth->finish();
-
-  template 'queue', { queue => $queue };
-};
-
-get '/songs' => sub {
-  my $sth = database->prepare_cached(q{
-    select * 
-    from song 
-    where title like ?
-    order by title asc
-  });
-
-  my $search = params->{q} ? '%' . params->{q} . '%' : '%';
-  $sth->execute($search);
-  my $songs = $sth->fetchall_arrayref({});
-  $sth->finish();
-
-  $_->{ago} = ago($_->{last_played}) for @$songs;
-
-  template 'songs', { songs => $songs };
-};
-
-get '/upload' => sub { 
-  template 'upload';
-};
-
-get '/post' => sub { 
-  template 'post';
-};
-
 # default route (404)
-prefix undef;
 any qr{.*} => sub { status 'not_found'; template '404' };
 
 true;
