@@ -1,0 +1,23 @@
+<h2>View Song</h2>
+<form method="post" action="/songs/<% params.id %>">
+  <fieldset>
+    <p>
+      <label for="title">Title:</label>
+      <input id="title" name="title" value="<% song.title %>" />
+    </p>
+    <p>
+      <label for="path">Path:</label>
+      <input id="path" value="<% song.path %>" readonly />
+    </p>
+    <p>
+      <label for="last_played">Last Played:</label>
+      <input id="last_played" value="<% ago(song.last_played) %>" readonly />
+    </p>
+    <p>
+      <label for="position">Position</label>
+      <input id="position" value="<% song.position %>" readonly />
+    </p>
+
+    <input type="submit" value="Update" />
+  </fieldset>
+</form>

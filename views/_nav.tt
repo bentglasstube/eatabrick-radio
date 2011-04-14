@@ -7,9 +7,8 @@
 <ul id="navigation">
   <% link('/', 'News') %>
   <% link('/songs', 'Songs') %>
-  <% link('/queue', 'Queue') %>
-  <% link('/upload', 'Upload') %>
   <% if session.user %>
+    <% link('/upload', 'Upload') %>
     <% link('/logout', 'Log out') %>
   <% else %>
     <% link('/login', 'Log In') %>

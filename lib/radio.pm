@@ -20,12 +20,14 @@ sub flash {
 }
 
 sub require_login {
-  return if session('user');
+  return 1 if session('user');
   
   flash warning => 'You must log in to view this page.';
   session(requested_page => request->path_info);
   
   redirect '/login';
+
+  return 0;
 }
 
 sub digest {
@@ -59,6 +61,8 @@ sub authenticate {
 
 sub ago {
   my $timestamp = shift;
+
+  return 'Never' unless $timestamp;
 
   my $now = time;
   my $minutes = int(($now - $timestamp) / 60);
@@ -100,12 +104,38 @@ before_template sub {
   $sth->execute();
   
   $tokens->{now_playing} = ($sth->fetchrow_array())[0];
+  $tokens->{ago} = \&ago;
 
   $sth->finish();
 };
 
 get '/' => sub { 
-  template 'news';
+  my $sth = query(q{
+    select user.name, news.posted, news.body
+    from news 
+    inner join user on user.id = news.author
+    order by news.posted desc 
+    limit 5
+  });
+  
+  $sth->execute();
+  my $news = $sth->fetchall_arrayref({});
+  $sth->finish();
+
+  template 'news', { posts => $news };
+};
+
+post '/' => sub {
+  require_login or return;
+
+  my $sth = query('insert into news (author, posted, body) values (?, ?, ?)');
+
+  $sth->execute(session->{user}{id}, time, params->{post});
+  $sth->finish();
+
+  flash 'News posted';
+
+  redirect '/';
 };
 
 get '/songs' => sub {
@@ -114,54 +144,89 @@ get '/songs' => sub {
 
   if (params->{q}) {
     push @constraints, 'title like ?';
-    push @params, '%' . params->{q}, '%';
+    push @params, '%' . params->{q} . '%';
   }
 
   if (params->{queue}) {
-    push @constraints, 'queue.position is not null';
+    push @constraints, 'queue.position > 0';
+  }
+
+  if (params->{never}) {
+    push @constraints, 'song.last_played = 0';
+  }
+
+  if (params->{min_ago}) {
+    push @constraints, 'song.last_played < ?';
+    push @params, time() - params->{min_ago} * params->{min_ago_units};
+  }
+
+  if (params->{max_ago}) {
+    push @constraints, 'song.last_played > ?';
+    push @params, time() - params->{max_ago} * params->{max_ago_units};
   }
 
   my $constraints = join(' and ', @constraints) || 1;
 
-  my $sth_count = query(q{
-    select count(song.id)
-    from song
-    left join queue on queue.song_id = song.id
-    where %s
-  }, $constraints);
-
-  my $sth_data = query(q{
+  my $sth = query(q{
     select song.id, song.title, song.last_played, queue.position 
     from song 
     left join queue on queue.song_id = song.id
     where %s
     order by title asc
-    limit ?, ?
   }, $constraints);
 
-  $sth_count->execute(@params);
-  my ($count) = $sth_count->fetchrow_array();
-  $sth_count->finish();
+  $sth->execute(@params);
+  my $songs = $sth->fetchall_arrayref({});
+  $sth->finish();
 
-  push @params, 5 * ((params->{page} || 1) - 1), 5;
+  template 'songs', {songs => $songs};
+};
 
-  $sth_data->execute(@params);
-  my $songs = $sth_data->fetchall_arrayref({});
-  $sth_data->finish();
+get '/songs/:id' => sub {
+  my $sth = query(q{
+    select song.title, song.last_played, queue.position
+    from song
+    left join queue on queue.song_id = song.id
+    where song.id = ?
+  });
+  
+  $sth->execute(params->{id});
+  my $song = $sth->fetchrow_hashref();
+  $sth->finish();
 
-  $_->{ago} = ago($_->{last_played}) for @$songs;
+  unless ($song) {
+    status 'not_found';
+    template '404';
+    return;
+  }
 
-  template 'songs', { 
-    songs => $songs,
-    pager => {
-      current => params->{page} || 1,
-      last => floor($count / 5),
-    }, 
-  };
+  template 'song', { song => $song };
+};
+
+post '/songs/:id' => sub {
+  require_login or return;
+
+  my $sth = query('update song set title = ? where id = ?');
+  $sth->execute(params->{title}, params->{id});
+  $sth->finish;
+
+  flash 'Song renamed.';
+
+  redirect '/songs/' . params->{id}; 
 };
 
 get '/upload' => sub { 
+  require_login or return;
+
   template 'upload';
+};
+
+post '/upload' => sub {
+  require_login or return;
+
+  flash warning => 'Uploading is not yet implemented.';
+
+  redirect '/upload';
 };
 
 get '/login' => sub { 
@@ -191,6 +256,9 @@ get '/logout' => sub {
 };
 
 # default route (404)
-any qr{.*} => sub { status 'not_found'; template '404' };
+any qr{.*} => sub { 
+  status 'not_found'; 
+  template '404';
+};
 
 true;

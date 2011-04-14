@@ -6,7 +6,7 @@
 </p>
 <form method="post" action="/upload" enctype="multipart/form-data">
   <fieldset>
-    <input type="file" name="upload" id="upload" />
+    <p><input type="file" name="upload" id="upload" /></p>
     <input type="submit" value="Upload" />
   </fieldset>
 </form>

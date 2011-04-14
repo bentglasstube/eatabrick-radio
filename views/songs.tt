@@ -1,46 +1,66 @@
 <h2>Songs</h2>
 
+<% macro option(text, value, param) block %>
+<option value="<% value %>" <% if param == value %>selected<% end %>><% text %></option>
+<% end %>
+
+<% macro checkbox(text, name, param) block %>
+<input type="checkbox" id="<% name %>" name="<% name %>" <% if params.$name %>checked<% end %> /> <label for="<% name %>"><% text %></label>
+<% end %>
+
 <form method="get" action="/songs">
   <fieldset>
-    <label for="q">Search:</label>
-    <input type="hidden" name="page" value="<% params.page %>" />
-    <input type="test" name="q" value="<% params.q %>" id="q" />
+    <p>
+      <label for="q">Title:</label>
+      <input type="text" name="q" value="<% params.q %>" id="q" />
+    </p>
+    <p><% checkbox('Show only enqueued songs.', 'queue') %></p>
+    <p><% checkbox('Show only songs that have never played.', 'never') %></p>
+    <p>
+      Last played between
+      <input type="text" size="5" name="min_ago" value="<% params.min_ago %>" />
+      <select name="min_ago_units">
+        <% option('seconds', 1,        params.min_ago_units) %>
+        <% option('minutes', 60,       params.min_ago_units) %>
+        <% option('hours',   3600,     params.min_ago_units) %>
+        <% option('days',    86400,    params.min_ago_units) %>
+        <% option('weeks',   604800,   params.min_ago_units) %>
+        <% option('months',  2592000,  params.min_ago_units) %>
+        <% option('years',   31536000, params.min_ago_units) %>
+      </select>
+      and
+      <input type="text" size="5" name="max_ago" value="<% params.max_ago %>" />
+      <select name="max_ago_units">
+        <% option('seconds', 1,        params.min_ago_units) %>
+        <% option('minutes', 60,       params.min_ago_units) %>
+        <% option('hours',   3600,     params.min_ago_units) %>
+        <% option('days',    86400,    params.min_ago_units) %>
+        <% option('weeks',   604800,   params.min_ago_units) %>
+        <% option('months',  2592000,  params.min_ago_units) %>
+        <% option('years',   31536000, params.min_ago_units) %>
+      </select>
+      ago.
+    </p>
     <input type="submit" value="Search" />
   </fieldset>
 </form>
-
-<% macro page_link(page, text) if pager.current == page or page < 1 or page > pager.last %>
-  <% text %>
-<% else %>
-  <a href="?q=<% params.q %>&amp;p=<% page %>"><% text %></a>
-<% end %>
 
 <h2>Results</h2>
 <% if songs.size > 0 %>
   <table>
     <thead>
-      <tr><td>Title</td><td>Last Played</td></tr>
+      <tr><td>Title</td><td>Last Played</td><td>Queue Position</td></tr>
     </thead>
     <tbody>
       <% foreach song in songs %>
         <tr>
           <td><a href="/songs/<% song.id %>"><% song.title %></a></td>
-          <td><% song.ago %></td>
+          <td><% ago(song.last_played) %></td>
+          <td><% song.position %></td>
         </tr>
       <% end %>
     </tbody>
-  </table>
-  <% if pager %>
-    <div class="pager">
-      <% page_link(1, '&laquo;') %>
-      <% page_link(pager.current - 1, '&lt;') %>
-      <% foreach page in [1 .. pager.last] %>
-        <% page_link(page, page) %>
-      <% end %>
-      <% page_link(pager.current + 1, '&gt;') %>
-      <% page_link(pager.last, '&raquo;') %>
-    </div>
-  <% end %>
+ </table>
 <% else %>
   <p class="empty">There are no matching songs.</p>
 <% end %>

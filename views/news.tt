@@ -1,9 +1,23 @@
 <h2>News</h2>
-<% foreach post in news %>
-  <h3><% post.title %></h3>
-  <div class="news-date"><% post.date %></div>
-  <div class="news-author"><% post.author %></div>
-  <div class="news-post">
-    <% post.content %>
-  </div>
+
+<% if posts.size > 0 %>
+  <% foreach post in posts %>
+    <div class="post">
+      <% post.body %>
+      <p class="postinfo">By <% post.name %>, <% ago(post.posted) %>.</p>
+    </div>
+  <% end %>
+<% else %>
+  <p class="empty">There is no news.</p>
 <% end %>
+
+<% if session.user %> 
+  <h2>Post News</h2>
+  <form method="post" action="/">
+    <fieldset>
+      <textarea name="post" id="post"></textarea>
+      <input type="submit" value="Post" />
+    </fieldset>
+  </form>
+<% end %>
+

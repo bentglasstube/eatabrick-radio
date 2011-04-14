@@ -1,6 +1,7 @@
 appname: "Eat a Brick Radio"
 layout: "main"
 charset: "UTF-8"
+page: 20
 
 template: "template_toolkit"
 engines:

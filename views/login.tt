@@ -1,12 +1,14 @@
 <h2>Log In</h2>
 <form method="post" action="/login">
   <fieldset>
-    <dl>
-      <dt><label for="name">Name:</label></dt>
-      <dd><input name="name" id="name" /></dd>
-      <dt><label for="pass">Password:</label></dt>
-      <dd><input type="password" name="pass" id="pass" /></dd>
-    </dl>
+    <p>
+      <label for="name">Name:</label>
+      <input name="name" id="name" value="<% params.name %>" />
+    </p>
+    <p>
+      <label for="pass">Password:</label>
+      <input type="password" name="pass" id="pass" />
+    </p>
     <input type="submit" value="Log In" />
   </fieldset>
 </form>

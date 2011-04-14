@@ -4,11 +4,14 @@
     <title>Eat a Brick Radio</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
+
   <body>
     <div id="header">
       <div id="playing">
         <!-- audio src="<% stream_uri %>" controls -->
-          <a href="<% stream_uri %>" title="listen"><% now_playing %></a>
+        <a href="<% stream_uri %>" title="listen">
+          Currently playing: <% now_playing %>
+        </a>
         <!-- /audio -->
       </div>
       <h1>Eat a Brick Radio</h1>
