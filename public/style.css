@@ -158,6 +158,10 @@ textarea {
   margin-top: 1em;
 }
 
+.postinfo form, .postinfo fieldset {
+  display: inline;
+}
+
 .post {
   margin-bottom: 2em;
 }

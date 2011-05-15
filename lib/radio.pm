@@ -4,13 +4,68 @@ use strict;
 use warnings;
 
 use Dancer ':syntax';
-use Dancer::Plugin::Database;
+
 use POSIX qw(ceil floor);
+
 use Digest::SHA1 'sha1_base64';
+
+use File::MimeInfo;
+use File::Basename;
+use MP3::Tag;
+use IO::File;
 
 our $VERSION = '0.1';
 
-# utilities
+our %songs = ();
+our @queue = ();
+our @news  = ();
+
+sub add_news {
+  my $path = shift;
+
+  my $file = IO::File->new($path, 'r');
+  my $post = {
+    id => basename($path, '.txt'),
+    posted => ($file->stat)[10],
+    body => join('', $file->getlines),
+  };
+  
+  @news = sort {$b->{posted} <=> $a->{posted}} @news, $post;
+}
+
+sub read_news {
+  my $path = setting('path_news');
+  add_news $_ for <$path/*.txt>;
+}
+
+sub add_song {
+  my $path = shift;
+
+  my $mp3 = MP3::Tag->new($path);
+  $mp3->get_tags;
+
+  my $id = basename($path, '.mp3');
+
+  $songs{$id} = {
+    id => $id,
+    path => $path,
+    title => join(' - ', $mp3->artist, $mp3->title),
+    last_played => 0,
+    mp3 => $mp3,
+  };
+}
+
+sub read_songs {
+  my $path = setting('path_songs');
+  add_song $_ for <$path/*.mp3>;
+}
+
+sub generate_id {
+  my $id = sha1_base64(join '::', rand, time);
+  $id =~ s/\//_/g;
+
+  return $id;
+}
 
 sub flash { 
   my $type = @_ > 1 ? shift : '';
@@ -30,33 +85,10 @@ sub require_login {
   return 0;
 }
 
-sub digest {
-  my ($salt, $value) = @_;
-  
-  return sha1_base64(join '::', $salt, setting('salt_key'), $value);
-}
-
-sub query {
-  my $sql = shift;
-
-  database->prepare_cached(sprintf($sql, @_));
-}
-
 sub authenticate {
-  my ($name, $password) = @_;
+  my ($name, $pass) = @_;
   
-  my $sth = query('select * from user where name = ?');
-  $sth->execute($name);
-
-  my $user = $sth->fetchrow_hashref or return undef;
-
-  $sth->finish();
-
-  if ($user->{pass} eq digest($user->{salt}, $password)) {
-    return $user;
-  } else {
-    return undef;
-  }
+  return $pass eq setting('admin_pass');
 }
 
 sub ago {
@@ -70,7 +102,9 @@ sub ago {
   my $count = 0;
   my $unit = 'minute';
 
-  if ($minutes < 55) {
+  if ($minutes < 1) {
+    return 'Just now';
+  } elsif ($minutes < 55) {
     $count = ceil($minutes / 5) * 5;
   } elsif ($minutes < 23 * 60) {
     $count = ceil($minutes / 60);
@@ -89,130 +123,123 @@ sub ago {
     $unit = 'year';
   }
 
-  return sprintf('%u %s%s ago', $count, $unit, $count > 1 ? 's' : '');
+  return sprintf('%u %s%s ago', $count, $unit, $count == 1 ? '' : 's');
+}
+
+sub get_current_song {
+  return undef;
+}
+
+sub get_song_list {
+  my $q = shift;
+
+  return [@songs{grep {$songs{$_}{title} =~ /\Q$q\E/i} keys %songs}] if $q;
+  return [@songs{keys %songs}];
 }
 
 before_template sub {
   my $tokens = shift;
   
-  my $sth = query(q{
-    select song.title
-    from queue
-    inner join song on queue.song_id = song.id
-    where queue.position = 0
-  });
-  $sth->execute();
-  
-  $tokens->{now_playing} = ($sth->fetchrow_array())[0];
+  $tokens->{now_playing} = get_current_song();
   $tokens->{ago} = \&ago;
-
-  $sth->finish();
 };
 
 get '/' => sub { 
-  my $sth = query(q{
-    select user.name, news.posted, news.body
-    from news 
-    inner join user on user.id = news.author
-    order by news.posted desc 
-    limit 5
-  });
-  
-  $sth->execute();
-  my $news = $sth->fetchall_arrayref({});
-  $sth->finish();
-
-  template 'news', { posts => $news };
+  template 'news', { posts => \@news };
 };
 
 post '/' => sub {
   require_login or return;
 
-  my $sth = query('insert into news (author, posted, body) values (?, ?, ?)');
+  my $id = generate_id();
 
-  $sth->execute(session->{user}{id}, time, params->{post});
-  $sth->finish();
+  my $path = setting('path_news') . "/$id.txt";
+  my $file = IO::File->new($path, 'w');
 
-  flash 'News posted';
+  if ($file) {
+    $file->print(params->{post});
+    $file->close();
+
+    add_news($path);
+    flash 'News posted';
+  } else {
+    flash error => "Unable to open news file $path: $!";
+  }
+
+  redirect '/';
+};
+
+post '/news/delete' => sub {
+  require_login or return;
+
+  my $path = setting('path_news') . '/' . params->{id};
+
+  if (unlink $path) {
+    flash 'Post deleted';
+    @news = grep {$_->{id} ne params->{id}} @news;
+  } else {
+    flash error => "Could not delete post: $!";
+  }
 
   redirect '/';
 };
 
 get '/songs' => sub {
-  my @constraints = ();
-  my @params = ();
+  template 'songs', { songs => get_song_list(params->{q}) };
+};
 
-  if (params->{q}) {
-    push @constraints, 'title like ?';
-    push @params, '%' . params->{q} . '%';
+get '/songs/:id.mp3' => sub {
+  if (session('user') and my $song = $songs{params->{id}}) {
+    content_type 'audio/mpeg';
+
+    my $file = IO::File->new($song->{path}, 'r');
+    join '', $file->getlines();
+  } else {
+    status 'not_found';
+    template '404';
   }
+};
 
-  if (params->{queue}) {
-    push @constraints, 'queue.position > 0';
+get '/songs/:id.png' => sub {
+  if (my $song = $songs{params->{id}}) {
+    if (my $art = $song->select_id3v2_frame_by_descr('APIC')) {
+    } else {
+      send_file 'unknown.jpg';
+    }
+  } else {
+    status 'not_found';
+    template '404';
   }
-
-  if (params->{never}) {
-    push @constraints, 'song.last_played = 0';
-  }
-
-  if (params->{min_ago}) {
-    push @constraints, 'song.last_played < ?';
-    push @params, time() - params->{min_ago} * params->{min_ago_units};
-  }
-
-  if (params->{max_ago}) {
-    push @constraints, 'song.last_played > ?';
-    push @params, time() - params->{max_ago} * params->{max_ago_units};
-  }
-
-  my $constraints = join(' and ', @constraints) || 1;
-
-  my $sth = query(q{
-    select song.id, song.title, song.last_played, queue.position 
-    from song 
-    left join queue on queue.song_id = song.id
-    where %s
-    order by title asc
-  }, $constraints);
-
-  $sth->execute(@params);
-  my $songs = $sth->fetchall_arrayref({});
-  $sth->finish();
-
-  template 'songs', {songs => $songs};
 };
 
 get '/songs/:id' => sub {
-  my $sth = query(q{
-    select song.title, song.last_played, queue.position
-    from song
-    left join queue on queue.song_id = song.id
-    where song.id = ?
-  });
-  
-  $sth->execute(params->{id});
-  my $song = $sth->fetchrow_hashref();
-  $sth->finish();
-
-  unless ($song) {
+  if (my $song = $songs{params->{id}}) {
+    template 'song', { song => $song };
+  } else {
+    debug 'No song with id ' . params->{id};
     status 'not_found';
     template '404';
-    return;
   }
-
-  template 'song', { song => $song };
 };
 
 post '/songs/:id' => sub {
   require_login or return;
 
-  my $sth = query('update song set title = ? where id = ?');
-  $sth->execute(params->{title}, params->{id});
-  $sth->finish;
+  if (my $song = $songs{params->{id}}) {
+    my @frames = grep /T.../, params;
 
-  flash 'Song renamed.';
+    $song->{mp3}->select_id3v2_frame_by_descr($_, params->{$_}) for @frames;
+    $song->{mp3}->update_tags;
 
-  redirect '/songs/' . params->{id}; 
+    $song->{title} = join ' - ', $song->{mp3}->artist, $song->{mp3}->title;
+
+    flash 'Updated song information';
+
+    redirect '/songs/' . params->{id}; 
+  } else {
+    status 'not_found';
+    template '404';
+  }
 };
 
 get '/upload' => sub { 
@@ -224,9 +251,26 @@ get '/upload' => sub {
 post '/upload' => sub {
   require_login or return;
 
-  flash warning => 'Uploading is not yet implemented.';
+  if (my $file = upload('upload')) {
+    # check mime type
+    my $type = mimetype($file->tempname);
+    if ($type eq 'audio/mpeg') {
+      # link the song and call it a day
+      my $id = generate_id;
+      my $path = setting('path_songs') . "/$id.mp3";
 
-  redirect '/upload';
+      $file->link_to($path);
+      add_song($path);
+
+      flash 'Song added.';
+      redirect "/songs/$id";
+    } else {
+      flash warning => "Cannot process $type files.";
+      redirect '/upload';
+    }
+  } else {
+    redirect '/upload';
+  }
 };
 
 get '/login' => sub { 
@@ -234,13 +278,13 @@ get '/login' => sub {
 };
 
 post '/login' => sub {
-  if (my $user = authenticate(params->{name}, params->{pass})) {
-    flash 'Welcome, ' . $user->{name} . '.';
+  if (authenticate(params->{name}, params->{pass})) {
+    flash 'Welcome, ' . params->{name} . '.';
 
     my $uri = session('requested_page') || '/';
     
     session(requested_page => undef);
-    session(user => $user);
+    session(user => params->{name});
     
     redirect $uri;
   } else {
@@ -260,5 +304,10 @@ any qr{.*} => sub {
   status 'not_found'; 
   template '404';
 };
+
+read_songs;
+read_news;
+
+# play;
 
 true;

@@ -1,46 +1,8 @@
 <h2>Songs</h2>
 
-<% macro option(text, value, param) block %>
-<option value="<% value %>" <% if param == value %>selected<% end %>><% text %></option>
-<% end %>
-
-<% macro checkbox(text, name, param) block %>
-<input type="checkbox" id="<% name %>" name="<% name %>" <% if params.$name %>checked<% end %> /> <label for="<% name %>"><% text %></label>
-<% end %>
-
 <form method="get" action="/songs">
   <fieldset>
-    <p>
-      <label for="q">Title:</label>
-      <input type="text" name="q" value="<% params.q %>" id="q" />
-    </p>
-    <p><% checkbox('Show only enqueued songs.', 'queue') %></p>
-    <p><% checkbox('Show only songs that have never played.', 'never') %></p>
-    <p>
-      Last played between
-      <input type="text" size="5" name="min_ago" value="<% params.min_ago %>" />
-      <select name="min_ago_units">
-        <% option('seconds', 1,        params.min_ago_units) %>
-        <% option('minutes', 60,       params.min_ago_units) %>
-        <% option('hours',   3600,     params.min_ago_units) %>
-        <% option('days',    86400,    params.min_ago_units) %>
-        <% option('weeks',   604800,   params.min_ago_units) %>
-        <% option('months',  2592000,  params.min_ago_units) %>
-        <% option('years',   31536000, params.min_ago_units) %>
-      </select>
-      and
-      <input type="text" size="5" name="max_ago" value="<% params.max_ago %>" />
-      <select name="max_ago_units">
-        <% option('seconds', 1,        params.min_ago_units) %>
-        <% option('minutes', 60,       params.min_ago_units) %>
-        <% option('hours',   3600,     params.min_ago_units) %>
-        <% option('days',    86400,    params.min_ago_units) %>
-        <% option('weeks',   604800,   params.min_ago_units) %>
-        <% option('months',  2592000,  params.min_ago_units) %>
-        <% option('years',   31536000, params.min_ago_units) %>
-      </select>
-      ago.
-    </p>
+    <input type="text" name="q" value="<% params.q %>" id="q" />
     <input type="submit" value="Search" />
   </fieldset>
 </form>
@@ -49,14 +11,24 @@
 <% if songs.size > 0 %>
   <table>
     <thead>
-      <tr><td>Title</td><td>Last Played</td><td>Queue Position</td></tr>
+      <tr>
+        <td>Artist</td>
+        <td>Title</td>
+        <td>Album</td>
+        <td>Track</td>
+        <td>Year</td>
+        <td>Last Played</td>
+      </tr>
     </thead>
     <tbody>
       <% foreach song in songs %>
         <tr>
-          <td><a href="/songs/<% song.id %>"><% song.title %></a></td>
+          <td><% song.mp3.artist %></td>
+          <td><a href="/songs/<% song.id %>"><% song.mp3.title %></a></td>
+          <td><% song.mp3.album %></td>
+          <td><% song.mp3.track %></td>
+          <td><% song.mp3.year %></td>
           <td><% ago(song.last_played) %></td>
-          <td><% song.position %></td>
         </tr>
       <% end %>
     </tbody>

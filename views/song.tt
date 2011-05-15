@@ -1,23 +1,30 @@
+<% macro mp3tag(label, tag) block %>
+    <p>
+      <label for="<% tag %>"><% label %>:</label>
+      <input id="<% tag %>" name="<% tag %>" value="<% song.mp3.select_id3v2_frame_by_descr(tag) %>" />
+    </p>
+<% end %>
+
 <h2>View Song</h2>
-<form method="post" action="/songs/<% params.id %>">
+<form method="post" action="/songs/<% song.id %>">
   <fieldset>
-    <p>
-      <label for="title">Title:</label>
-      <input id="title" name="title" value="<% song.title %>" />
-    </p>
-    <p>
-      <label for="path">Path:</label>
-      <input id="path" value="<% song.path %>" readonly />
-    </p>
+    <% mp3tag('Artist', 'TPE1') %>
+    <% mp3tag('Title',  'TIT2') %>
+    <% mp3tag('Album',  'TALB') %>
+    <% mp3tag('Track',  'TRCK') %>
+    <% mp3tag('Year',   'TYER') %>
     <p>
       <label for="last_played">Last Played:</label>
       <input id="last_played" value="<% ago(song.last_played) %>" readonly />
     </p>
-    <p>
-      <label for="position">Position</label>
-      <input id="position" value="<% song.position %>" readonly />
-    </p>
 
-    <input type="submit" value="Update" />
+    <% if session.user %>
+      <input type="submit" value="Update" />
+    <% end %>
   </fieldset>
 </form>
+
+<% if session.user %>
+  <audio src="<% song.id %>.mp3" controls></audio>
+<% end %>
+
