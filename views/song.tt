@@ -6,6 +6,8 @@
 <% end %>
 
 <h2>View Song</h2>
+
+<img id="cover" src="<% song.id %>.jpg" alt="Cover art" />
 <form method="post" action="/songs/<% song.id %>">
   <fieldset>
     <% mp3tag('Artist', 'TPE1') %>

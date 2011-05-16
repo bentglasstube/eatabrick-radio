@@ -158,7 +158,7 @@ textarea {
   margin-top: 1em;
 }
 
-.postinfo form, .postinfo fieldset {
+form.inline, form.inline fieldset {
   display: inline;
 }
 
@@ -168,5 +168,12 @@ textarea {
 
 input[readonly] {
   background: #eee;
+}
+
+#cover {
+  width: 150px;
+  height: 150px;
+  float: left;
+  margin-right: 1em;
 }
 

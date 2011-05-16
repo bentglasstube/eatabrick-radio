@@ -1,6 +1,6 @@
 <% macro link(uri, text) block -%>
   <% current = '' -%>
-  <% current = 'current' if uri == request.path_info -%>
+  <% current = 'current' if request.path_info == uri -%>
   <li class="<% current %>"><a href="<% uri %>"><% text %></a></li>
 <% end -%>
 

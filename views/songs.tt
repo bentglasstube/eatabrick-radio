@@ -1,5 +1,4 @@
 <h2>Songs</h2>
-
 <form method="get" action="/songs">
   <fieldset>
     <input type="text" name="q" value="<% params.q %>" id="q" />
@@ -18,17 +17,35 @@
         <td>Track</td>
         <td>Year</td>
         <td>Last Played</td>
+        <td></td>
       </tr>
     </thead>
     <tbody>
       <% foreach song in songs %>
         <tr>
           <td><% song.mp3.artist %></td>
-          <td><a href="/songs/<% song.id %>"><% song.mp3.title %></a></td>
+          <td><% song.mp3.title %></td>
           <td><% song.mp3.album %></td>
           <td><% song.mp3.track %></td>
           <td><% song.mp3.year %></td>
           <td><% ago(song.last_played) %></td>
+          <td>
+            <a href="/songs/<% song.id %>"><img src="/view.png" alt="view" title="View song information" /></a>
+            <form method="post" action="songs/enqueue" class="inline">
+              <fieldset>
+                <input type="hidden" name="id" value="<% song.id %>" />
+                <input type="image" src="/heart.png" title="Request song" />
+              </fieldset>
+            </form>
+            <% if session.user %>
+              <form method="post" action="songs/delete" class="inline">
+                <fieldset>
+                  <input type="hidden" name="id" value="<% song.id %>" />
+                  <input type="image" src="/delete.png" title="Delete song" />
+                </fieldset>
+              </form>
+            <% end %>
+          </td>
         </tr>
       <% end %>
     </tbody>

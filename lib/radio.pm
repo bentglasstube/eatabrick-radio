@@ -5,30 +5,37 @@ use warnings;
 
 use Dancer ':syntax';
 
-use POSIX qw(ceil floor);
+use threads;
+use threads::shared;
 
-use Digest::SHA1 'sha1_base64';
-
-use File::MimeInfo;
+use File::MimeInfo::Magic;
 use File::Basename;
 use MP3::Tag;
+use MPEG::Audio::Frame;
 use IO::File;
+use IO::String;
+use Archive::Zip;
+use Shout;
+use POSIX qw(ceil);
+use Digest::SHA1 'sha1_base64';
 
 our $VERSION = '0.1';
 
-our %songs = ();
-our @queue = ();
-our @news  = ();
+our %songs   :shared = ();
+our @queue   :shared = ();
+our @news    :shared = ();
+our $current :shared = '';
 
 sub add_news {
   my $path = shift;
 
   my $file = IO::File->new($path, 'r');
-  my $post = {
+  my $post = shared_clone({
     id => basename($path, '.txt'),
+    path => $path,
     posted => ($file->stat)[10],
     body => join('', $file->getlines),
-  };
+  });
   
   @news = sort {$b->{posted} <=> $a->{posted}} @news, $post;
 }
@@ -46,18 +53,68 @@ sub add_song {
 
   my $id = basename($path, '.mp3');
 
-  $songs{$id} = {
+  my $song = {
     id => $id,
     path => $path,
     title => join(' - ', $mp3->artist, $mp3->title),
     last_played => 0,
-    mp3 => $mp3,
+    mp3 => shared_clone($mp3),
   };
+
+  $songs{$id} = shared_clone($song);
 }
 
 sub read_songs {
   my $path = setting('path_songs');
   add_song $_ for <$path/*.mp3>;
+}
+
+sub get_next_song {
+  return shift @queue if @queue;
+
+  my @keys = keys %songs;
+  return $songs{$keys[$#keys * rand]};
+}
+
+sub play {
+  my $shout = Shout->new(
+    host        => 'localhost',
+    port        => 8000,
+    mount       => 'eatabrick',
+    user        => 'source',
+    password    => 'afoevb',
+    nonblocking => 0,
+    dumpfile    => undef,
+    name        => 'Eat a Brick Radio',
+    url         => 'http://radio.eatabrick.org/',
+    genre       => 'Steve',
+    description => 'For to be to make you smarter.  For to be to get you dead.',
+    format      => SHOUT_FORMAT_MP3,
+    protocol    => SHOUT_PROTOCOL_HTTP,
+    public      => 1,
+  );
+
+  $shout->open or die('Cannot connect to shout server: ' . $shout->get_error);
+
+  my $buffer = '';
+
+  while (1) { 
+    my $song = get_next_song();
+    my $meta = join ' - ', $song->{mp3}->artist, $song->{mp3}->title;
+    my $file = IO::File->new($song->{path}, 'r');
+
+    $shout->set_metadata(song => $meta);
+    $current = $meta;
+    while (my $frame = MPEG::Audio::Frame->read($file)) {
+      threads->yield;
+      if ($shout->send($frame->asbin)) {
+        $shout->sync;
+      } else {
+        $shout->close;
+        $shout->open;
+      }
+    }
+  } 
 }
 
 sub generate_id {
@@ -126,10 +183,6 @@ sub ago {
   return sprintf('%u %s%s ago', $count, $unit, $count == 1 ? '' : 's');
 }
 
-sub get_current_song {
-  return undef;
-}
-
 sub get_song_list {
   my $q = shift;
 
@@ -140,7 +193,7 @@ sub get_song_list {
 before_template sub {
   my $tokens = shift;
   
-  $tokens->{now_playing} = get_current_song();
+  $tokens->{now_playing} = $current; 
   $tokens->{ago} = \&ago;
 };
 
@@ -172,16 +225,20 @@ post '/' => sub {
 post '/news/delete' => sub {
   require_login or return;
 
-  my $path = setting('path_news') . '/' . params->{id};
+  my @post = grep {$_->{id} eq params->{id}} @news;
+  if ($post[0]) {
+    if (unlink $post[0]->{path}) {
+      flash 'Post deleted';
+      @news = grep {$_->{id} ne params->{id}} @news;
+    } else {
+      flash error => "Could not delete post: $!";
+    }
 
-  if (unlink $path) {
-    flash 'Post deleted';
-    @news = grep {$_->{id} ne params->{id}} @news;
+    redirect '/';
   } else {
-    flash error => "Could not delete post: $!";
+    status 'not found';
+    template '404';
   }
-
-  redirect '/';
 };
 
 get '/songs' => sub {
@@ -200,9 +257,17 @@ get '/songs/:id.mp3' => sub {
   }
 };
 
-get '/songs/:id.png' => sub {
+get '/songs/:id.jpg' => sub {
   if (my $song = $songs{params->{id}}) {
-    if (my $art = $song->select_id3v2_frame_by_descr('APIC')) {
+    if (my $art = $song->{mp3}->select_id3v2_frame_by_descr('APIC')) {
+      my $type = mimetype(IO::String->new($art));
+      
+      if ($type =~ /^image/) {
+        content_type $type;
+        $art;
+      } else {
+        send_file 'unknown.jpg';
+      }
     } else {
       send_file 'unknown.jpg';
     }
@@ -216,7 +281,34 @@ get '/songs/:id' => sub {
   if (my $song = $songs{params->{id}}) {
     template 'song', { song => $song };
   } else {
-    debug 'No song with id ' . params->{id};
+    status 'not_found';
+    template '404';
+  }
+};
+
+post '/songs/enqueue' => sub {
+  if (my $song = $songs{params->{id}}) {
+    push @queue, $song;
+    flash 'Song enqueued';
+    redirect '/songs';
+  } else {
+    status 'not_found';
+    template '404';
+  }
+};
+
+post '/songs/delete' => sub {
+  require_login or return;
+
+  if (my $song = $songs{params->{id}}) {
+    if (unlink($song->{path})) {
+      flash 'Song deleted';
+      delete $songs{$song->{id}};
+    } else {
+      flash error => "Unable to delete song: $!";
+    }
+    redirect '/songs';
+  } else {
     status 'not_found';
     template '404';
   }
@@ -226,7 +318,7 @@ post '/songs/:id' => sub {
   require_login or return;
 
   if (my $song = $songs{params->{id}}) {
-    my @frames = grep /T.../, params;
+    my @frames = grep /^[A-Z]{4}$/, params;
 
     $song->{mp3}->select_id3v2_frame_by_descr($_, params->{$_}) for @frames;
     $song->{mp3}->update_tags;
@@ -264,6 +356,28 @@ post '/upload' => sub {
 
       flash 'Song added.';
       redirect "/songs/$id";
+    } elsif ($type eq 'application/zip') {
+      my $zip = Archive::Zip->new($file->tempname);
+
+      my $count = 0;
+
+      for ($zip->members) {
+        my $data = $zip->contents($_);
+        next unless mimetype(IO::String->new($data)) eq 'audio/mpeg';
+
+        my $id = generate_id;
+        my $path = setting('path_songs') . "/$id.mp3";
+
+        my $file = IO::File->new($path, 'w');
+        $file->print($data);
+        $file->close();
+
+        add_song($path);
+        $count++;
+      }
+
+      flash "Added $count songs from archive";
+      redirect '/songs';
     } else {
       flash warning => "Cannot process $type files.";
       redirect '/upload';
@@ -308,6 +422,6 @@ any qr{.*} => sub {
 read_songs;
 read_news;
 
-# play;
+threads->create('play')->detach;
 
 true;
