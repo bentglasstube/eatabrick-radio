@@ -1,0 +1,25 @@
+appname: "Eat a Brick Radio"
+layout: "main"
+charset: "UTF-8"
+template: "template_toolkit"
+logger: console
+log: warning
+session: simple
+show_errors: 0
+warnings: 1
+startup_info: 0
+
+engines:
+  template_toolkit:
+    encoding: utf8
+    ANYCASE: 1
+    TRIM: 1
+    PRE_CHOMP: 2
+    POST_CHOMP: 2
+    
+pidfile: /var/run/eatabrick-radio/run.pid
+admin_pass: awesome
+path_news: data/news
+path_songs: /home/alan/Music/
+stream_uri: http://localhost:8000/eatabrick.m3u
+

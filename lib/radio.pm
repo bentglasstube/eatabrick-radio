@@ -27,6 +27,12 @@ our @news    :shared = ();
 our $current :shared = '';
 our @command :shared = ();
 
+#warn 'writing pid to ' . setting('pidfile');
+
+#my $pidfile = IO::File->new(setting('pidfile'), 'w') or die $!;
+#print $pidfile $$;
+#close $pidfile;
+
 sub add_news {
   my $path = shift;
 
@@ -43,6 +49,8 @@ sub add_news {
 }
 
 sub read_news {
+  debug 'Scanning news directory';
+
   my $path = setting('path_news');
   add_news $_ for <$path/*.txt>;
 }
@@ -63,17 +71,22 @@ sub add_song {
     artist => $mp3->artist,
     title => $mp3->title,
     album => $mp3->album,
-    track => $mp3->track1,
+    track => $mp3->track1 || 0,
     year => $mp3->year,
   });
 }
 
 sub read_songs {
-  my $path = setting('path_songs');
+  debug 'Scanning song directory';
   
   find({
     no_chdir => 1,
-    wanted => sub { add_song($_) if mimetype($_) eq 'audio/mpeg' },
+    wanted => sub { 
+      my $type = mimetype($_);
+      if ($type and $type eq 'audio/mpeg') {
+        add_song($_);
+      }
+    },
   }, setting('path_songs'));
 }
 
@@ -88,6 +101,8 @@ sub get_next_song {
 }
 
 sub play {
+  debug 'Starting playback thread';
+
   my $shout = Shout->new(
     host        => 'localhost',
     port        => 8000,
@@ -105,14 +120,26 @@ sub play {
     public      => 1,
   );
 
-  $shout->open or die('Cannot connect to shout server: ' . $shout->get_error);
+  unless ($shout->open) {
+    warning 'Cannot connect to shout server: ' . $shout->get_error;
+    return;
+  }
 
   my $buffer = '';
 
   while (1) { 
-    my $song = get_next_song() or last;
+    my $song = get_next_song();
+    unless ($song) {
+      warning 'No song to play';
+      last;
+    }
+
     my $meta = join ' - ', $song->{artist}, $song->{title};
     my $file = IO::File->new($song->{path}, 'r');
+    unless ($file) {
+      warning "Unable to open $song->{path}: $!";
+      next;
+    }
 
     $shout->set_metadata(song => $meta);
     {
@@ -135,17 +162,28 @@ sub play {
         }
       }
 
+      $shout->set_audio_info(
+        SHOUT_AI_BITRATE => $frame->bitrate,
+        SHOUT_AI_SAMPLERATE => $frame->sample,
+      );
+
       if ($shout->send($frame->asbin)) {
         $shout->sync;
       } else {
-        lock $current;
+        lock $current; 
         $current = '';
         $shout->close;
+        warning 'Sending to shoutcast failed: ' . $shout->get_error;
         return;
       }
     }
   } 
 }
+
+# background stuff
+threads->create('read_songs')->detach;
+threads->create('read_news')->detach;
+threads->create('play')->detach;
 
 sub flash { 
   my $type = @_ > 1 ? shift : '';
@@ -288,11 +326,12 @@ get '/songs/:id.jpg' => sub {
   if (my $song = $songs{params->{id}}) {
     my $mp3 = MP3::Tag->new($song->{path});
     if (my $art = $mp3->select_id3v2_frame_by_descr('APIC')) {
+      $art = $art->{_Data} if ref($art) eq 'HASH';
       my $type = mimetype(IO::String->new($art));
       
       if ($type =~ /^image/) {
         content_type $type;
-        $art;
+        return $art;
       } else {
         send_file 'unknown.jpg';
       }
@@ -450,6 +489,7 @@ post '/queue/start' => sub {
     flash warning => 'Already playing';
   } elsif (%songs) {
     threads->create('play')->detach;
+    sleep 1;
     flash 'Playback started';
   } else {
     flash warning => 'No songs to play';
@@ -523,10 +563,5 @@ any qr{.*} => sub {
   status 'not_found'; 
   template '404';
 };
-
-read_songs;
-read_news;
-
-threads->create('play')->detach;
 
 true;
