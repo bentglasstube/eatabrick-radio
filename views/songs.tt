@@ -1,7 +1,9 @@
 <h2>Songs</h2>
 <form method="get" action="/songs">
   <fieldset>
-    <input type="text" name="q" value="<% params.q %>" id="q" />
+    <input type="hidden" name="artist" value="<% params.artist %>" />
+    <input type="hidden" name="album" value="<% params.album %>" />
+    <input type="text" name="title" value="<% params.q %>" id="q" />
     <input type="submit" value="Search" />
   </fieldset>
 </form>
@@ -14,23 +16,23 @@
         <td>Artist</td>
         <td>Title</td>
         <td>Album</td>
-        <td>Track</td>
-        <td>Year</td>
-        <td>Last Played</td>
         <td></td>
       </tr>
     </thead>
     <tbody>
+      <% macro narrow(song, p) block %>
+        <a href="/songs?<% p %>=<% song.$p |uri %>"><% song.$p %></a>
+      <% end %>
       <% foreach song in songs %>
         <tr>
-          <td><% song.mp3.artist %></td>
-          <td><% song.mp3.title %></td>
-          <td><% song.mp3.album %></td>
-          <td><% song.mp3.track %></td>
-          <td><% song.mp3.year %></td>
-          <td><% ago(song.last_played) %></td>
+          <td><% narrow(song, 'artist') %></td>
           <td>
-            <a href="/songs/<% song.id %>"><img src="/view.png" alt="view" title="View song information" /></a>
+            <a href="/songs/<% song.id %>">
+              <% song.track %> - <% song.title %>
+            </a>
+          </td>
+          <td><% narrow(song, 'album') %></td>
+          <td>
             <form method="post" action="songs/enqueue" class="inline">
               <fieldset>
                 <input type="hidden" name="id" value="<% song.id %>" />

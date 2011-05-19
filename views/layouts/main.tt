@@ -9,9 +9,13 @@
     <div id="header">
       <div id="playing">
         <!-- audio src="<% stream_uri %>" controls -->
-        <a href="<% stream_uri %>" title="listen">
-          Currently playing: <% now_playing %>
-        </a>
+        <% if now_playing %>
+          <a href="<% stream_uri %>" title="listen">
+            Currently playing: <% now_playing %>
+          </a>
+        <% else %>
+          Not currently playing.
+        <% end %>
         <!-- /audio -->
       </div>
       <h1>Eat a Brick Radio</h1>

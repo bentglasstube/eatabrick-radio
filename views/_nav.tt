@@ -9,6 +9,7 @@
   <% link('/songs', 'Songs') %>
   <% if session.user %>
     <% link('/upload', 'Upload') %>
+    <% link('/queue', 'Queue') %>
     <% link('/logout', 'Log out') %>
   <% else %>
     <% link('/login', 'Log In') %>

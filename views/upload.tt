@@ -1,4 +1,5 @@
 <h2>Upload</h2>
+<%#
 <p>
   Uploaded songs will be converted automatically the correct format.  You may
   also upload an archive full of songs and all of them will be processed and 
@@ -10,3 +11,6 @@
     <input type="submit" value="Upload" />
   </fieldset>
 </form>
+%>
+<p>Song uploading is currently unavailable.</p>
+

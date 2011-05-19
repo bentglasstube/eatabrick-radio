@@ -9,7 +9,7 @@ use threads;
 use threads::shared;
 
 use File::MimeInfo::Magic;
-use File::Basename;
+use File::Find;
 use MP3::Tag;
 use MPEG::Audio::Frame;
 use IO::File;
@@ -25,13 +25,15 @@ our %songs   :shared = ();
 our @queue   :shared = ();
 our @news    :shared = ();
 our $current :shared = '';
+our @command :shared = ();
 
 sub add_news {
   my $path = shift;
 
+  lock @news;
+
   my $file = IO::File->new($path, 'r');
   my $post = shared_clone({
-    id => basename($path, '.txt'),
     path => $path,
     posted => ($file->stat)[10],
     body => join('', $file->getlines),
@@ -48,29 +50,38 @@ sub read_news {
 sub add_song {
   my $path = shift;
 
+  lock %songs;
+
   my $mp3 = MP3::Tag->new($path);
   $mp3->get_tags;
 
-  my $id = basename($path, '.mp3');
+  (my $id = sha1_base64($path)) =~ s/\//_/g;
 
-  my $song = {
+  $songs{$id} = shared_clone({
     id => $id,
     path => $path,
-    title => join(' - ', $mp3->artist, $mp3->title),
-    last_played => 0,
-    mp3 => shared_clone($mp3),
-  };
-
-  $songs{$id} = shared_clone($song);
+    artist => $mp3->artist,
+    title => $mp3->title,
+    album => $mp3->album,
+    track => $mp3->track1,
+    year => $mp3->year,
+  });
 }
 
 sub read_songs {
   my $path = setting('path_songs');
-  add_song $_ for <$path/*.mp3>;
+  
+  find({
+    no_chdir => 1,
+    wanted => sub { add_song($_) if mimetype($_) eq 'audio/mpeg' },
+  }, setting('path_songs'));
 }
 
 sub get_next_song {
+  lock @queue;
+
   return shift @queue if @queue;
+  return undef unless %songs;
 
   my @keys = keys %songs;
   return $songs{$keys[$#keys * rand]};
@@ -99,29 +110,41 @@ sub play {
   my $buffer = '';
 
   while (1) { 
-    my $song = get_next_song();
-    my $meta = join ' - ', $song->{mp3}->artist, $song->{mp3}->title;
+    my $song = get_next_song() or last;
+    my $meta = join ' - ', $song->{artist}, $song->{title};
     my $file = IO::File->new($song->{path}, 'r');
 
     $shout->set_metadata(song => $meta);
-    $current = $meta;
+    {
+      lock $current;
+      $current = $meta;
+    }
+
     while (my $frame = MPEG::Audio::Frame->read($file)) {
       threads->yield;
+
+      lock @command;
+      if (my $command = shift @command) {
+        if ($command eq 'skip') {
+          last;
+        } elsif ($command eq 'stop') {
+          lock $current;
+          $current = '';
+          $shout->close;
+          return;
+        }
+      }
+
       if ($shout->send($frame->asbin)) {
         $shout->sync;
       } else {
+        lock $current;
+        $current = '';
         $shout->close;
-        $shout->open;
+        return;
       }
     }
   } 
-}
-
-sub generate_id {
-  my $id = sha1_base64(join '::', rand, time);
-  $id =~ s/\//_/g;
-
-  return $id;
 }
 
 sub flash { 
@@ -183,18 +206,12 @@ sub ago {
   return sprintf('%u %s%s ago', $count, $unit, $count == 1 ? '' : 's');
 }
 
-sub get_song_list {
-  my $q = shift;
-
-  return [@songs{grep {$songs{$_}{title} =~ /\Q$q\E/i} keys %songs}] if $q;
-  return [@songs{keys %songs}];
-}
-
 before_template sub {
   my $tokens = shift;
   
   $tokens->{now_playing} = $current; 
   $tokens->{ago} = \&ago;
+  $tokens->{stream_uri} = setting('stream_uri');
 };
 
 get '/' => sub { 
@@ -204,7 +221,7 @@ get '/' => sub {
 post '/' => sub {
   require_login or return;
 
-  my $id = generate_id();
+  (my $id = sha1_base64(time * rand)) =~ s/\//_/g;
 
   my $path = setting('path_news') . "/$id.txt";
   my $file = IO::File->new($path, 'w');
@@ -242,7 +259,17 @@ post '/news/delete' => sub {
 };
 
 get '/songs' => sub {
-  template 'songs', { songs => get_song_list(params->{q}) };
+  my @s = sort {
+    $songs{$a}{artist} cmp $songs{$b}{artist} or
+    $songs{$a}{album}  cmp $songs{$b}{album}  or
+    $songs{$a}{track}  <=> $songs{$b}{track}
+  } keys %songs;
+
+  @s = grep {$songs{$_}{artist}   eq params->{artist}}   @s if params->{artist};
+  @s = grep {$songs{$_}{album}    eq params->{album}}    @s if params->{album};
+  @s = grep {lc $songs{$_}{title} eq lc params->{title}} @s if params->{title};
+  
+  template 'songs', { songs => [@songs{@s}] };
 };
 
 get '/songs/:id.mp3' => sub {
@@ -259,7 +286,8 @@ get '/songs/:id.mp3' => sub {
 
 get '/songs/:id.jpg' => sub {
   if (my $song = $songs{params->{id}}) {
-    if (my $art = $song->{mp3}->select_id3v2_frame_by_descr('APIC')) {
+    my $mp3 = MP3::Tag->new($song->{path});
+    if (my $art = $mp3->select_id3v2_frame_by_descr('APIC')) {
       my $type = mimetype(IO::String->new($art));
       
       if ($type =~ /^image/) {
@@ -279,7 +307,10 @@ get '/songs/:id.jpg' => sub {
 
 get '/songs/:id' => sub {
   if (my $song = $songs{params->{id}}) {
-    template 'song', { song => $song };
+    template 'song', { 
+      song => $song,
+      mp3 => MP3::Tag->new($song->{path}),
+    };
   } else {
     status 'not_found';
     template '404';
@@ -320,10 +351,10 @@ post '/songs/:id' => sub {
   if (my $song = $songs{params->{id}}) {
     my @frames = grep /^[A-Z]{4}$/, params;
 
-    $song->{mp3}->select_id3v2_frame_by_descr($_, params->{$_}) for @frames;
-    $song->{mp3}->update_tags;
+    my $mp3 = MP3::Tag->new($song->{path});
 
-    $song->{title} = join ' - ', $song->{mp3}->artist, $song->{mp3}->title;
+    $mp3->select_id3v2_frame_by_descr($_, params->{$_}) for @frames;
+    $mp3->update_tags;
 
     flash 'Updated song information';
 
@@ -343,12 +374,14 @@ get '/upload' => sub {
 post '/upload' => sub {
   require_login or return;
 
+  flash warning => 'Uploading has been disabled';
+  redirect '/upload';
+  return;
+
   if (my $file = upload('upload')) {
-    # check mime type
     my $type = mimetype($file->tempname);
     if ($type eq 'audio/mpeg') {
-      # link the song and call it a day
-      my $id = generate_id;
+      my $id = '0';
       my $path = setting('path_songs') . "/$id.mp3";
 
       $file->link_to($path);
@@ -365,8 +398,7 @@ post '/upload' => sub {
         my $data = $zip->contents($_);
         next unless mimetype(IO::String->new($data)) eq 'audio/mpeg';
 
-        my $id = generate_id;
-        my $path = setting('path_songs') . "/$id.mp3";
+        my $path = setting('path_songs'); # . "/$id.mp3";
 
         my $file = IO::File->new($path, 'w');
         $file->print($data);
@@ -385,6 +417,79 @@ post '/upload' => sub {
   } else {
     redirect '/upload';
   }
+};
+
+get '/queue' => sub {
+  require_login or return;
+
+  template 'queue', { queue => \@queue };
+};
+
+post '/queue/remove' => sub {
+  require_login or return;
+
+  my @new = ();
+  for (@queue) {
+    if ($_->{id} eq params->{id}) {
+      flash 'Song remove from queue';
+    } else {
+      push @new, $_;
+    }
+  }
+
+  lock @queue;
+  @queue = @new;
+
+  redirect '/queue';
+};
+
+post '/queue/start' => sub {
+  require_login or return;
+
+  if ($current) {
+    flash warning => 'Already playing';
+  } elsif (%songs) {
+    threads->create('play')->detach;
+    flash 'Playback started';
+  } else {
+    flash warning => 'No songs to play';
+  }
+
+  redirect '/queue';
+};
+
+post '/queue/stop' => sub {
+  require_login or return;
+
+  if ($current) {
+    lock @command;
+    push @command, 'stop';
+    flash 'Playback stopped';
+  } else {
+    flash warning => 'Not playing';
+  }
+
+  redirect '/queue';
+};
+
+post '/queue/rescan' => sub {
+  require_login or return;
+
+  read_songs;
+  flash 'Music directory rescanned';
+
+  redirect '/queue';
+};
+
+post '/queue/skip' => sub {
+  require_login or return;
+
+  lock @command;
+  push @command, 'skip';
+
+  flash 'Song skipped';
+
+  redirect '/queue';
 };
 
 get '/login' => sub { 

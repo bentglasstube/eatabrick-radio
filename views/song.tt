@@ -1,7 +1,7 @@
 <% macro mp3tag(label, tag) block %>
     <p>
       <label for="<% tag %>"><% label %>:</label>
-      <input id="<% tag %>" name="<% tag %>" value="<% song.mp3.select_id3v2_frame_by_descr(tag) %>" />
+      <input id="<% tag %>" name="<% tag %>" value="<% mp3.select_id3v2_frame_by_descr(tag) %>" />
     </p>
 <% end %>
 
@@ -15,10 +15,6 @@
     <% mp3tag('Album',  'TALB') %>
     <% mp3tag('Track',  'TRCK') %>
     <% mp3tag('Year',   'TYER') %>
-    <p>
-      <label for="last_played">Last Played:</label>
-      <input id="last_played" value="<% ago(song.last_played) %>" readonly />
-    </p>
 
     <% if session.user %>
       <input type="submit" value="Update" />
@@ -27,6 +23,14 @@
 </form>
 
 <% if session.user %>
+  <form class="inline" method="post" action="/songs/enqueue">
+    <input type="hidden" name="id" value="<% song.id %>" />
+    <input type="submit" value="Enqueue" />
+  </form>
+  <form class="inline" method="post" action="/songs/delete">
+    <input type="hidden" name="id" value="<% song.id %>" />
+    <input type="submit" value="Delete" />
+  </form>
   <audio src="<% song.id %>.mp3" controls></audio>
 <% end %>
 
