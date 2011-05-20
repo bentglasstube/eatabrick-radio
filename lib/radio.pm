@@ -10,6 +10,7 @@ use threads::shared;
 
 use File::MimeInfo::Magic;
 use File::Find;
+use File::Temp;
 use MP3::Tag;
 use MPEG::Audio::Frame;
 use IO::File;
@@ -243,6 +244,25 @@ sub ago {
   return sprintf('%u %s%s ago', $count, $unit, $count == 1 ? '' : 's');
 }
 
+sub analyze_mp3 {
+  my $path = shift;
+  my $hint = shift;
+
+  my $mp3 = MP3::Tag->new($path) or return undef;
+  $mp3->get_tags;
+
+  return {
+    path => $path,
+    hint => $hint,
+    artist => $mp3->artist,
+    title => $mp3->title,
+    album => $mp3->album,
+    track => $mp3->track,
+    year => $mp3->year,
+    album_artist => $mp3->select_id3v2_frame_by_descr('TPE2'),
+  };
+}
+
 before_template sub {
   my $tokens = shift;
   
@@ -395,49 +415,50 @@ get '/upload' => sub {
 post '/upload' => sub {
   require_login or return;
 
-  flash warning => 'Uploading has been disabled';
-  redirect '/upload';
-  return;
+  my @confirm = ();
 
   if (my $file = upload('upload')) {
     my $type = mimetype($file->tempname);
     if ($type eq 'audio/mpeg') {
-      my $id = '0';
-      my $path = setting('path_songs') . "/$id.mp3";
-
-      $file->link_to($path);
-      add_song($path);
-
-      flash 'Song added.';
-      redirect "/songs/$id";
-    } elsif ($type eq 'application/zip') {
-      my $zip = Archive::Zip->new($file->tempname);
-
-      my $count = 0;
-
-      for ($zip->members) {
-        my $data = $zip->contents($_);
-        next unless mimetype(IO::String->new($data)) eq 'audio/mpeg';
-
-        my $path = setting('path_songs'); # . "/$id.mp3";
-
-        my $file = IO::File->new($path, 'w');
-        $file->print($data);
-        $file->close();
-
-        add_song($path);
-        $count++;
+      if (my $song = analyze_mp3($file->tempname, $file->filename)) {
+        push @confirm, $song;
+      } else {
+        flash error => 'Unable to read tags from ' . $file->filename;
       }
-
-      flash "Added $count songs from archive";
-      redirect '/songs';
+    } elsif ($type eq 'application/zip') {
+      if (my $zip = Archive::Zip->new($file->tempname)) {
+        for my $member ($zip->members) {
+          my $data = $zip->contents($member);
+          next unless mimetype(IO::String->new($data)) eq 'audio/mpeg';
+  
+          my $fh = File::Temp->new(UNLINK => 0);
+          $fh->print($data);
+          $fh->close;
+  
+          if (my $song = analyze_mp3($fh->filename, $member->fileName)) {
+            push @confirm, $song;
+          } else {
+            flash error => 'Unable to read tags from ' . $member->fileName;
+          }
+        }
+      } else {
+        flash error => "Could not process zip archive";
+      }
     } else {
-      flash warning => "Cannot process $type files.";
-      redirect '/upload';
+      flash warning => "Cannot process $type files";
     }
-  } else {
-    redirect '/upload';
+  } elsif (my $ids = params->{include}) {
+    flash warning => 'Not yet implemented';
+
+    $ids = [$ids] unless ref $ids eq 'ARRAY';
+    foreach (@$ids) {
+      # save tags
+      # determine path
+      # link file
+    }
   }
+
+  template 'upload', { confirm => \@confirm };
 };
 
 get '/queue' => sub {
@@ -529,7 +550,7 @@ post '/login' => sub {
     
     redirect $uri;
   } else {
-    flash error => 'Invalid credentials.';
+    flash warning => 'Invalid credentials.';
     redirect '/login';
   }
 };

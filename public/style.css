@@ -21,6 +21,8 @@ body {
 
 #navigation {
   list-style: none;
+  white-space: nowrap;
+  overflow: visible;
 }
 
 #navigation li {

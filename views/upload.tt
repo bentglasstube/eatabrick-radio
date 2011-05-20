@@ -1,16 +1,43 @@
 <h2>Upload</h2>
-<%#
-<p>
-  Uploaded songs will be converted automatically the correct format.  You may
-  also upload an archive full of songs and all of them will be processed and 
-  added to the station.
-</p>
-<form method="post" action="/upload" enctype="multipart/form-data">
-  <fieldset>
-    <p><input type="file" name="upload" id="upload" /></p>
-    <input type="submit" value="Upload" />
-  </fieldset>
-</form>
-%>
-<p>Song uploading is currently unavailable.</p>
-
+<% if confirm and confirm.size > 0 %>
+  <% macro input(id, file, attr, text) block %>
+    <% name = id _ '.' _ attr %>
+    <dt><label for="<% name %>"><% text %></label></dt>
+    <dd><input type="text" id="<% name %>" name="<% name %>" value="<% file.$attr %>" /></dd>
+  <% end %>
+  <p>Please confirm the details of the files you are trying to upload.</p>
+  <form method="post" action="/upload">
+    <fieldset>
+      <% foreach file in confirm %>
+        <div class="tempfile">
+          <h3>
+            <input type="checkbox" id="<% loop.count %>.include" 
+            name="include" value="<% loop.count %>" checked>
+            <label for="<% loop.count %>.include"><% file.hint %></label>
+          </h3>
+          <dl>
+            <% input(loop.count, file, 'artist', 'Artist') %>
+            <% input(loop.count, file, 'title', 'Title') %>
+            <% input(loop.count, file, 'album', 'Album') %>
+            <% input(loop.count, file, 'track', 'Track') %>
+            <% input(loop.count, file, 'year', 'Year') %>
+            <% input(loop.count, file, 'album_artist', 'Album Artist') %>
+          </dl>
+        </div>
+      <% end %>
+      <input type="submit" value="Save Songs" />
+    </fieldset>
+  </form>
+<% else %>
+  <p>
+    Uploaded songs will be converted automatically the correct format.  You may
+    also upload an archive full of songs and all of them will be processed and 
+    added to the station.
+  </p>
+  <form method="post" action="/upload" enctype="multipart/form-data">
+    <fieldset>
+      <p><input type="file" name="upload" id="upload" /></p>
+      <input type="submit" value="Upload" />
+    </fieldset>
+  </form>
+<% end %>
