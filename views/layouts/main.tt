@@ -11,10 +11,12 @@
         <% if current %>
           <a href="/songs/<% current.id %>">
             <img src="/songs/<% current.id %>.jpg" alt="cover" />
-            <p><% current.track %> - <% current.title %></p>
+            <p><% current.title %></p>
             <p><% current.artist %></p>
             <p><% current.album %></p>
           </a>
+        <% else %>
+          <p>Not playing</p>
         <% end %>
       </div>
       <h1>Eat a Brick Radio</h1>

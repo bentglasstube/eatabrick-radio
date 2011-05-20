@@ -42,7 +42,7 @@
   <input type="submit" value="Skip Current Song" />
 </form>
 
-<% if now_playing %>
+<% if current %>
   <form class="inline" method="post" action="/queue/stop">
     <input type="submit" value="Stop Playback" />
   </form>

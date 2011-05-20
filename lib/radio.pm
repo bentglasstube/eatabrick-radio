@@ -28,6 +28,8 @@ our @news    :shared = ();
 our $current :shared = undef;
 our @command :shared = ();
 
+MP3::Tag->config(autoinfo => 'ID3v2');
+
 my $pidfile = IO::File->new(setting('pidfile'), 'w') or die $!;
 print $pidfile $$;
 close $pidfile;
@@ -50,6 +52,9 @@ sub add_news {
 sub read_news {
   debug 'Scanning news directory';
 
+  lock @news;
+  @news = ();
+
   my $path = setting('path_news');
   add_news $_ for <$path/*.txt>;
 }
@@ -59,7 +64,7 @@ sub add_song {
 
   lock %songs;
 
-  my $mp3 = MP3::Tag->new($path);
+  my $mp3 = MP3::Tag->new($path) or return;
   $mp3->get_tags;
 
   (my $id = sha1_base64($path)) =~ s/\//_/g;
@@ -70,13 +75,16 @@ sub add_song {
     artist => $mp3->artist,
     title => $mp3->title,
     album => $mp3->album,
+    album_artist => $mp3->select_id3v2_frame_by_descr('TPE2') || '',
     track => $mp3->track1 || 0,
-    year => $mp3->year,
   });
 }
 
 sub read_songs {
   debug 'Scanning song directory';
+
+  lock %songs;
+  %songs = ();
   
   find({
     no_chdir => 1,
@@ -134,18 +142,22 @@ sub play {
       last;
     }
 
-    my $meta = join ' - ', $song->{artist}, $song->{title};
     my $file = IO::File->new($song->{path}, 'r');
     unless ($file) {
       warning "Unable to open $song->{path}: $!";
       next;
     }
 
-    $shout->set_metadata(song => $meta);
     {
       lock $current;
       $current = $song;
     }
+
+    $shout->set_metadata(
+      title => $song->{title},
+      artist => $song->{artist},
+      album => $song->{album}
+    );
 
     while (my $frame = MPEG::Audio::Frame->read($file)) {
       threads->yield;
@@ -244,23 +256,33 @@ sub ago {
   return sprintf('%u %s%s ago', $count, $unit, $count == 1 ? '' : 's');
 }
 
-sub analyze_mp3 {
+sub add_new_song {
   my $path = shift;
-  my $hint = shift;
 
-  my $mp3 = MP3::Tag->new($path) or return undef;
-  $mp3->get_tags;
+  if (my $mp3 = MP3::Tag->new($path)) {
+    $mp3->get_tags;
 
-  return {
-    path => $path,
-    hint => $hint,
-    artist => $mp3->artist,
-    title => $mp3->title,
-    album => $mp3->album,
-    track => $mp3->track,
-    year => $mp3->year,
-    album_artist => $mp3->select_id3v2_frame_by_descr('TPE2'),
-  };
+    my $title = $mp3->title or return 'Missing title';
+    my $artist = $mp3->select_id3v2_frame_by_descr('TPE2') || $mp3->artist or return 'Missing artist';
+    my $album = $mp3->album or return 'Missing album';
+    my $track = $mp3->track1 or return 'Missing track';
+
+    my $dir = sprintf('%s/%s - %s', setting('path_songs'), $artist, $album);
+    my $file = sprintf('%02u %s.mp3', $track, $title);
+    my $new = "$dir/$file";
+
+    return 'File already exists' if -e $new;
+
+    mkdir $dir;
+    link $path, $new or return "Failed to link file: $!";
+    if (my $song = add_song($new)) {
+      return $song;
+    } else {
+      return 'Failed to add song';
+    }
+  } else {
+    return "Could not open $path";
+  }
 }
 
 before_template sub {
@@ -316,15 +338,16 @@ post '/news/delete' => sub {
 };
 
 get '/songs' => sub {
-  my @s = sort {
-    $songs{$a}{artist} cmp $songs{$b}{artist} or
-    $songs{$a}{album}  cmp $songs{$b}{album}  or
-    $songs{$a}{track}  <=> $songs{$b}{track}
-  } keys %songs;
+  my @s = keys %songs;
 
   @s = grep {$songs{$_}{artist}   eq params->{artist}}   @s if params->{artist};
   @s = grep {$songs{$_}{album}    eq params->{album}}    @s if params->{album};
   @s = grep {lc $songs{$_}{title} eq lc params->{title}} @s if params->{title};
+
+  my @s = sort {
+    $songs{$a}{album}  cmp $songs{$b}{album}  or
+    $songs{$a}{track}  <=> $songs{$b}{track}
+  } @s;
   
   template 'songs', { songs => [@songs{@s}] };
 };
@@ -375,29 +398,35 @@ get '/songs/:id' => sub {
   }
 };
 
-post '/songs/enqueue' => sub {
-  if (my $song = $songs{params->{id}}) {
-    push @queue, $song;
-    flash 'Song enqueued';
-    redirect '/songs';
-  } else {
-    status 'not_found';
-    template '404';
-  }
-};
-
 post '/songs/:id' => sub {
-  require_login or return;
-
   if (my $song = $songs{params->{id}}) {
-    my @frames = grep /^[A-Z]{4}$/, params;
+    if (params->{enqueue}) {
+      lock @queue;
+      push @queue, $song;
 
-    my $mp3 = MP3::Tag->new($song->{path});
+      flash 'Song enqueued';
+    } elsif (params->{play}) {
+      require_login or return;
 
-    $mp3->select_id3v2_frame_by_descr($_, params->{$_}) for @frames;
-    $mp3->update_tags;
+      lock @queue;
+      unshift @queue, $song;
 
-    flash 'Updated song information';
+      lock @command;
+      push @command, 'skip';
+
+      flash 'Song playing';
+    } else {
+      require_login or return;
+
+      my @frames = grep /^[A-Z]{4}$/, params;
+
+      my $mp3 = MP3::Tag->new($song->{path});
+
+      $mp3->select_id3v2_frame_by_descr($_, params->{$_}) for @frames;
+      $mp3->update_tags;
+  
+      flash 'Updated song information';
+    }
 
     redirect '/songs/' . params->{id}; 
   } else {
@@ -415,50 +444,48 @@ get '/upload' => sub {
 post '/upload' => sub {
   require_login or return;
 
-  my @confirm = ();
+  my @results = ();
 
   if (my $file = upload('upload')) {
     my $type = mimetype($file->tempname);
     if ($type eq 'audio/mpeg') {
-      if (my $song = analyze_mp3($file->tempname, $file->filename)) {
-        push @confirm, $song;
+      my $result = add_new_song($file->tempname);
+      if (ref $result) {
+        flash 'Song added';
+        redirect "/songs/$result->{id}";
+        return;
       } else {
-        flash error => 'Unable to read tags from ' . $file->filename;
+        flash warning => $result;
       }
     } elsif ($type eq 'application/zip') {
       if (my $zip = Archive::Zip->new($file->tempname)) {
+
         for my $member ($zip->members) {
-          my $data = $zip->contents($member);
-          next unless mimetype(IO::String->new($data)) eq 'audio/mpeg';
-  
-          my $fh = File::Temp->new(UNLINK => 0);
-          $fh->print($data);
-          $fh->close;
-  
-          if (my $song = analyze_mp3($fh->filename, $member->fileName)) {
-            push @confirm, $song;
+          my $file = IO::String->new($zip->contents($member));
+          next unless mimetype($file) eq 'audio/mpeg';
+
+          my $temp = File::Temp->new->filename;
+          $zip->extractMemberWithoutPaths($member, $temp);
+          my $result = add_new_song($temp);
+          if (ref $result) {
+            push @results, { filename => $member->fileName, song => $result };
           } else {
-            flash error => 'Unable to read tags from ' . $member->fileName;
+            push @results, { filename => $member->fileName, error => $result };
           }
         }
+
+        flash warning => 'No music files in zip' unless @results;
       } else {
         flash error => "Could not process zip archive";
       }
     } else {
       flash warning => "Cannot process $type files";
     }
-  } elsif (my $ids = params->{include}) {
-    flash warning => 'Not yet implemented';
-
-    $ids = [$ids] unless ref $ids eq 'ARRAY';
-    foreach (@$ids) {
-      # save tags
-      # determine path
-      # link file
-    }
+  } else {
+    flash warning => 'Please select a file';
   }
 
-  template 'upload', { confirm => \@confirm };
+  template 'upload', { results => \@results };
 };
 
 get '/queue' => sub {

@@ -1,9 +1,11 @@
- * Fix uploading of single files
- * Fix uploading of .zip archives
- * Add support for various audio files (re-encode to mp3)
- * Add support for other archive types
+Immediate Priority - Bugs
+
+Medium Priority - Cool Features
  * Album roll
  * Autocompleting search
+
+Low Priority - Meh Features
+ * Add support for various audio files (re-encode to mp3)
+ * Add support for other archive types
  * Change album art
- * Play immediately
 

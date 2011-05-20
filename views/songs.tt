@@ -1,21 +1,18 @@
 <h2>Songs</h2>
 <form method="get" action="/songs">
   <fieldset>
-    <input type="hidden" name="artist" value="<% params.artist %>" />
-    <input type="hidden" name="album" value="<% params.album %>" />
-    <input type="text" name="title" value="<% params.q %>" id="q" />
+    <input type="text" name="title" value="<% params.title %>" />
     <input type="submit" value="Search" />
   </fieldset>
 </form>
 
-<h2>Results</h2>
 <% if songs.size > 0 %>
   <table>
     <thead>
       <tr>
+        <td>Album</td>
         <td>Artist</td>
         <td>Title</td>
-        <td>Album</td>
       </tr>
     </thead>
     <tbody>
@@ -24,13 +21,9 @@
       <% end %>
       <% foreach song in songs %>
         <tr>
-          <td><% narrow(song, 'artist') %></td>
-          <td>
-            <a href="/songs/<% song.id %>">
-              <% song.track %> - <% song.title %>
-            </a>
-          </td>
           <td><% narrow(song, 'album') %></td>
+          <td><% narrow(song, 'artist') %></td>
+          <td><a href="/songs/<% song.id %>"><% song.title %></a></td>
         </tr>
       <% end %>
     </tbody>

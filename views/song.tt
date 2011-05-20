@@ -1,30 +1,29 @@
 <% macro mp3tag(label, tag) block %>
-    <p>
-      <label for="<% tag %>"><% label %>:</label>
-      <input id="<% tag %>" name="<% tag %>" value="<% mp3.select_id3v2_frame_by_descr(tag) %>" />
-    </p>
+      <dt><label for="<% tag %>"><% label %>:</label></dt>
+      <dd><input id="<% tag %>" name="<% tag %>" value="<% mp3.select_id3v2_frame_by_descr(tag) %>" /></dd>
 <% end %>
 
 <h2>View Song</h2>
 
-<img id="cover" src="<% song.id %>.jpg" alt="Cover art" />
 <form method="post" action="/songs/<% song.id %>">
   <fieldset>
-    <% mp3tag('Artist', 'TPE1') %>
-    <% mp3tag('Title',  'TIT2') %>
-    <% mp3tag('Album',  'TALB') %>
-    <% mp3tag('Track',  'TRCK') %>
-    <% mp3tag('Year',   'TYER') %>
+    <img id="cover" src="<% song.id %>.jpg" alt="Cover art" />
+    <dl>
+      <% mp3tag('Artist',       'TPE1') %>
+      <% mp3tag('Title',        'TIT2') %>
+      <% mp3tag('Album',        'TALB') %>
+      <% mp3tag('Album Artist', 'TPE2') %>
+      <% mp3tag('Track',        'TRCK') %>
+    </dl>
 
-    <% if session.user %>
-      <input type="submit" value="Update" />
-    <% end %>
+    <div style="clear: both;">
+      <% if session.user %>
+        <input type="submit" value="Update" />
+        <input type="submit" name="play" value="Play Now" />
+      <% end %>
+      <input type="submit" name="enqueue" value="Enqueue" />
+    </div>
   </fieldset>
-</form>
-
-<form class="inline" method="post" action="/songs/enqueue">
-  <input type="hidden" name="id" value="<% song.id %>" />
-  <input type="submit" value="Enqueue" />
 </form>
 
 <% if session.user %>

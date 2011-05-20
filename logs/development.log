@@ -1,0 +1,3 @@
+Use of uninitialized value in subroutine entry at /usr/local/lib/perl/5.10.1/Shout.pm line 576.
+>> Dancer 1.3020 server 13377 listening on http://0.0.0.0:3000
+bind to 0.0.0.0:3000: Address already in use at /usr/local/share/perl/5.10.1/Dancer.pm line 331
