@@ -22,15 +22,12 @@
   </fieldset>
 </form>
 
+<form class="inline" method="post" action="/songs/enqueue">
+  <input type="hidden" name="id" value="<% song.id %>" />
+  <input type="submit" value="Enqueue" />
+</form>
+
 <% if session.user %>
-  <form class="inline" method="post" action="/songs/enqueue">
-    <input type="hidden" name="id" value="<% song.id %>" />
-    <input type="submit" value="Enqueue" />
-  </form>
-  <form class="inline" method="post" action="/songs/delete">
-    <input type="hidden" name="id" value="<% song.id %>" />
-    <input type="submit" value="Delete" />
-  </form>
   <audio src="<% song.id %>.mp3" controls></audio>
 <% end %>
 

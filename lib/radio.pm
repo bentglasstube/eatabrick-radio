@@ -24,14 +24,12 @@ our $VERSION = '0.1';
 our %songs   :shared = ();
 our @queue   :shared = ();
 our @news    :shared = ();
-our $current :shared = '';
+our $current :shared = undef;
 our @command :shared = ();
 
-#warn 'writing pid to ' . setting('pidfile');
-
-#my $pidfile = IO::File->new(setting('pidfile'), 'w') or die $!;
-#print $pidfile $$;
-#close $pidfile;
+my $pidfile = IO::File->new(setting('pidfile'), 'w') or die $!;
+print $pidfile $$;
+close $pidfile;
 
 sub add_news {
   my $path = shift;
@@ -83,6 +81,8 @@ sub read_songs {
     no_chdir => 1,
     wanted => sub { 
       my $type = mimetype($_);
+      debug "Found $_ with type $type";
+
       if ($type and $type eq 'audio/mpeg') {
         add_song($_);
       }
@@ -144,7 +144,7 @@ sub play {
     $shout->set_metadata(song => $meta);
     {
       lock $current;
-      $current = $meta;
+      $current = $song;
     }
 
     while (my $frame = MPEG::Audio::Frame->read($file)) {
@@ -156,7 +156,7 @@ sub play {
           last;
         } elsif ($command eq 'stop') {
           lock $current;
-          $current = '';
+          undef $current;
           $shout->close;
           return;
         }
@@ -171,7 +171,7 @@ sub play {
         $shout->sync;
       } else {
         lock $current; 
-        $current = '';
+        undef $current;
         $shout->close;
         warning 'Sending to shoutcast failed: ' . $shout->get_error;
         return;
@@ -247,7 +247,7 @@ sub ago {
 before_template sub {
   my $tokens = shift;
   
-  $tokens->{now_playing} = $current; 
+  $tokens->{current} = $current; 
   $tokens->{ago} = \&ago;
   $tokens->{stream_uri} = setting('stream_uri');
 };
@@ -360,23 +360,6 @@ post '/songs/enqueue' => sub {
   if (my $song = $songs{params->{id}}) {
     push @queue, $song;
     flash 'Song enqueued';
-    redirect '/songs';
-  } else {
-    status 'not_found';
-    template '404';
-  }
-};
-
-post '/songs/delete' => sub {
-  require_login or return;
-
-  if (my $song = $songs{params->{id}}) {
-    if (unlink($song->{path})) {
-      flash 'Song deleted';
-      delete $songs{$song->{id}};
-    } else {
-      flash error => "Unable to delete song: $!";
-    }
     redirect '/songs';
   } else {
     status 'not_found';

@@ -19,19 +19,6 @@ body {
   margin-bottom: 0.5em;
 }
 
-#playing {
-  float: right;
-  color: #000;
-  font-weight: bold;
-  font-size: 0.7em;
-  text-decoration: none;
-  margin-bottom: 0.2em;
-}
-
-#playing img {
-  vertical-align: bottom;
-}
-
 #navigation {
   list-style: none;
 }
@@ -175,5 +162,28 @@ input[readonly] {
   height: 150px;
   float: left;
   margin-right: 1em;
+}
+
+#playing {
+  float: right;
+  color: #000;
+  font-weight: bold;
+  font-size: 0.7em;
+  text-decoration: none;
+  margin-bottom: 0.2em;
+  width: 50%;
+}
+
+#playing img {
+  width: 50px;
+  height: 50px;
+  margin-left: 0.5em;
+  float: right;
+}
+
+#playing p {
+  color: #000;
+  text-align: right;
+  white-space: nowrap;
 }
 

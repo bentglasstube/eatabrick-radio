@@ -12,17 +12,17 @@
 
 ############### EDIT ME ##################
 # path to app
-APP_PATH=/home/alan/Projects/eatabrick-radio/
+APP_PATH=/home/alan/eatabrick-radio/
 
-# path to python bin
+# path to perl binary
 DAEMON=/usr/bin/perl
 
 # Path to store PID file
-PID_FILE=/var/run/eatabrick-radio/eatabrick-radio.pid
+PID_FILE=/var/run/eatabrick-radio/run.pid
 PID_PATH=`dirname $PID_FILE`
 
 # startup args
-DAEMON_OPTS="bin/app.pl --daemon --confdir=/etc/eatabrick-radio/"
+DAEMON_OPTS="bin/app.pl 2>>/var/log/eatabrick-radio.log &"
 
 # script name
 NAME=eatabrick-radio

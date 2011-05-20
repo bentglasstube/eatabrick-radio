@@ -8,15 +8,14 @@
   <body>
     <div id="header">
       <div id="playing">
-        <!-- audio src="<% stream_uri %>" controls -->
-        <% if now_playing %>
-          <a href="<% stream_uri %>" title="listen">
-            Currently playing: <% now_playing %>
+        <% if current %>
+          <a href="/songs/<% current.id %>">
+            <img src="/songs/<% current.id %>.jpg" alt="cover" />
+            <p><% current.track %> - <% current.title %></p>
+            <p><% current.artist %></p>
+            <p><% current.album %></p>
           </a>
-        <% else %>
-          Not currently playing.
         <% end %>
-        <!-- /audio -->
       </div>
       <h1>Eat a Brick Radio</h1>
       <% include '_nav.tt' %>

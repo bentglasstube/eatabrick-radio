@@ -16,7 +16,6 @@
         <td>Artist</td>
         <td>Title</td>
         <td>Album</td>
-        <td></td>
       </tr>
     </thead>
     <tbody>
@@ -32,22 +31,6 @@
             </a>
           </td>
           <td><% narrow(song, 'album') %></td>
-          <td>
-            <form method="post" action="songs/enqueue" class="inline">
-              <fieldset>
-                <input type="hidden" name="id" value="<% song.id %>" />
-                <input type="image" src="/heart.png" title="Request song" />
-              </fieldset>
-            </form>
-            <% if session.user %>
-              <form method="post" action="songs/delete" class="inline">
-                <fieldset>
-                  <input type="hidden" name="id" value="<% song.id %>" />
-                  <input type="image" src="/delete.png" title="Delete song" />
-                </fieldset>
-              </form>
-            <% end %>
-          </td>
         </tr>
       <% end %>
     </tbody>
