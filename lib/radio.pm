@@ -81,7 +81,6 @@ sub read_songs {
     no_chdir => 1,
     wanted => sub { 
       my $type = mimetype($_);
-      debug "Found $_ with type $type";
 
       if ($type and $type eq 'audio/mpeg') {
         add_song($_);
