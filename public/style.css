@@ -5,6 +5,7 @@
 
 body {
   font-family: verdana, sans-serif;
+  background: #fff url('/watermark.png') no-repeat fixed center center;
 }
 
 #header {

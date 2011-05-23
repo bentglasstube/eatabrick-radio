@@ -11,6 +11,7 @@ use threads::shared;
 use File::MimeInfo::Magic;
 use File::Find;
 use File::Temp;
+use File::Copy;
 use MP3::Tag;
 use MPEG::Audio::Frame;
 use IO::File;
@@ -93,6 +94,9 @@ sub read_songs {
 
       if ($type and $type eq 'audio/mpeg') {
         add_song($_);
+      } else {
+        $type ||= 'Unknown type';
+        debug "Unusable file $_ ($type)";
       }
     },
   }, setting('path_songs'));
@@ -114,7 +118,7 @@ sub play {
   my $shout = Shout->new(
     host        => 'localhost',
     port        => 8000,
-    mount       => 'eatabrick',
+    mount       => setting('mountpoint'),
     user        => 'source',
     password    => 'afoevb',
     nonblocking => 0,
@@ -274,7 +278,7 @@ sub add_new_song {
     return 'File already exists' if -e $new;
 
     mkdir $dir;
-    link $path, $new or return "Failed to link file: $!";
+    copy $path, $new or return "Failed to copy file: $!";
     if (my $song = add_song($new)) {
       return $song;
     } else {
