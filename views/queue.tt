@@ -1,53 +1,36 @@
-<h2>Queue</h2>
-
 <% if queue.size > 0 %>
-  <table>
-    <thead>
-      <tr>
-        <td>Artist</td>
-        <td>Title</td>
-        <td>Album</td>
-        <td></td>
-      </tr>
-    </thead>
-    <tbody>
-      <% for song in queue %>
-        <tr>
-          <td><% song.artist %></td>
-          <td><% song.track %> - <% song.title %></td>
-          <td><% song.album %></td>
-          <td>
-            <form class="inline" method="post" action="/queue/remove">
-              <fieldset>
-                <input type="hidden" name="id" value="<% song.id %>" />
-                <input type="image" src="/delete.png" title="Remove" />
-              </fieldset>
-            </form>
-          </td>
-        </tr>
+  <% for song in queue %>
+    <div class="queue">
+      <% if session.user %>
+        <form class="inline" method="post" action="/queue">
+          <fieldset>
+            <input type="hidden" name="id" value="<% song.id %>" />
+            <input type="submit" name="remove" value="Remove" />
+            <input type="submit" name="play" value="Play Next" />
+          </fieldset>
+        </form>
       <% end %>
-    </tbody>
-  </table>
+
+      <img src="<% song.uri %>.png" alt="cover" />
+      <p><a href="<% song.uri %>"><% song.title %></a></p>
+      <p><% song.artist %></p>
+      <p><a href="<% song.album_uri %>"><% song.album %></a></p>
+    </div>
+  <% end %>
 <% else %>
   <p class="empty">No songs in queue</p>
 <% end %>
 
-<h2>Playback</h2>
-
-<form class="inline" method="post" action="/queue/rescan">
-  <input type="submit" value="Rescan Music Folder" />
-</form>
-
-<form class="inline" method="post" action="/queue/skip">
-  <input type="submit" value="Skip Current Song" />
-</form>
-
-<% if current %>
-  <form class="inline" method="post" action="/queue/stop">
-    <input type="submit" value="Stop Playback" />
-  </form>
-<% else %>
-  <form class="inline" method="post" action="/queue/start">
-    <input type="submit" value="Start Playback" />
+<% if session.user %>
+  <form method="post" action="/queue">
+    <fieldset>
+      <input type="submit" name="rescan" value="Rescan Music Folder" />
+      <% if current %>
+        <input type="submit" name="skip" value="Skip Current Song" />
+        <input type="submit" name="stop" value="Stop Playback" />
+      <% else %>
+        <input type="submit" name="start" value="Start Playback" />
+      <% end %>
+    </fieldset>
   </form>
 <% end %>

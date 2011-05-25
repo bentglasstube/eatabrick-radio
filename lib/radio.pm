@@ -20,13 +20,14 @@ use Archive::Zip;
 use Shout;
 use POSIX qw(ceil);
 use Digest::SHA1 'sha1_base64';
+use Data::Dumper;
 
 our $VERSION = '0.1';
 
 our %songs   :shared = ();
 our %albums  :shared = ();
 our @queue   :shared = ();
-our @news    :shared = ();
+our @news            = ();
 our $current :shared = undef;
 our @command :shared = ();
 
@@ -44,11 +45,11 @@ sub add_news {
   lock @news;
 
   my $file = IO::File->new($path, 'r');
-  my $post = shared_clone({
+  my $post = {
     path => $path,
     posted => ($file->stat)[10],
     body => join('', $file->getlines),
-  });
+  };
   
   @news = sort {$b->{posted} <=> $a->{posted}} @news, $post;
 }
@@ -56,7 +57,6 @@ sub add_news {
 sub read_news {
   debug 'Scanning news directory';
 
-  lock @news;
   @news = ();
 
   my $path = setting('path_news');
@@ -65,9 +65,6 @@ sub read_news {
 
 sub add_song {
   my $path = shift;
-
-  lock %songs;
-  lock %albums;
 
   my $mp3 = MP3::Tag->new($path) or return;
   $mp3->get_tags;
@@ -80,27 +77,43 @@ sub add_song {
     artist => $mp3->artist,
     title => $mp3->title,
     album => $mp3->album,
-    album_artist => $mp3->select_id3v2_frame_by_descr('TPE2') || '',
     track => $mp3->track1 || 0,
   });
+
+  if (my $art = $mp3->select_id3v2_frame_by_descr('APIC')) {
+    $art = $art->{_Data} if ref($art) eq 'HASH';
+    my $type = mimetype(IO::String->new($art));
+
+    if ($type =~ /^image\//) {
+      $song->{art} = shared_clone({
+        type => $type,
+        data => $art,
+      });
+    }
+  }
+
+  my $album_id = urlify($song->{album});
+  my $artist = $mp3->select_id3v2_frame_by_descr('TPE2') || $song->{artist};
   
-  $song->{uri} = sprintf('/songs/%s/%u', urlify($song->{album}), $song->{track});
+  $song->{album_uri} = sprintf('/songs/%s', $album_id);
+  $song->{uri} = sprintf('/songs/%s/%u', $album_id, $song->{track});
 
   lock %albums;
   lock %songs;
 
-  my $album_id = urlify($song->{album});
   $albums{$album_id} ||= shared_clone({
     id => $album_id,
     title => $song->{album},
-    artist => $song->{album_artist},
-    songs => shared_clone({}),
+    artist => $artist,
+    songs => shared_clone([]),
+    uri => $song->{album_uri},
+    art => shared_clone($song->{art}),
   });
   
-  if ($albums{$album_id}{songs}{$song->{track}}) {
+  if ($albums{$album_id}{songs}[$song->{track}]) {
     warning "Multiple songs for track $song->{track} on album $song->{album}";
   } else {
-    $albums{$album_id}{songs}{$song->{track}} = $songs{$id} = $song;
+    $albums{$album_id}{songs}[$song->{track}] = $songs{$id} = $song;
   }
 }
 
@@ -223,9 +236,10 @@ sub play {
   } 
 }
 
-# background stuff
-threads->create('read_songs')->detach;
-threads->create('read_news')->detach;
+read_songs();
+read_news();
+
+# Start playback thread
 threads->create('play')->detach;
 
 sub flash { 
@@ -316,22 +330,6 @@ sub add_new_song {
   }
 }
 
-sub album_art {
-  my $path = shift;
-
-  if (my $mp3 = MP3::Tag->new($path)) {
-    if (my $art = $mp3->select_id3v2_frame_by_descr('APIC')) {
-      $art = $art->{_Data} if ref($art) eq 'HASH';
-      my $type = mimetype(IO::String->new($art));
-
-      if ($type =~ /^image\//) {
-        return $type, $art;
-      }
-    }
-  }
-
-  return undef;
-}
 
 before_template sub {
   my $tokens = shift;
@@ -389,25 +387,26 @@ get '/songs' => sub {
   if (my $q = params->{q}) {
     template 'songs', { songs => search_songs($q) };
   } else {
-    template 'albums', { albums => [sort {
+    my @albums = map $albums{$_}, sort {
       $albums{$a}{title} cmp $albums{$b}{title}
-    } keys %albums ]};
+    } keys %albums;
+
+    template 'albums', { albums => \@albums };
   }
 };
 
-get '/songs/:album.jpg' => sub {
+get '/songs/:album.png' => sub {
   if (my $album = $albums{params->{album}}) {
-    my ($type, $data) = album_art($album->{songs}{1}{path});
-    if ($type) {
-      content_type $type;
-      return $data;
+    if ($album->{art}) {
+      content_type $album->{art}{type};
+      return $album->{art}{data};
+    } else {
+      return send_file 'unknown.png';
     }
-    
-    return send_file 'unknown.jpg';
+  } else {
+    status 'not_found';
+    template '404';
   }
-
-  status 'not_found';
-  template '404';
 };
 
 get '/songs/:album' => sub {
@@ -419,10 +418,29 @@ get '/songs/:album' => sub {
   }
 };
 
+post '/songs/:album' => sub {
+  if (my $album = $albums{params->{album}}) {
+    if (params->{enqueue}) {
+      require_login or return;
+
+      lock @queue;
+      push @queue, grep { defined $_ } @{$album->{songs}};
+
+      flash 'Album added to queue';
+    }
+
+    redirect $album->{uri};
+  } else {
+    status 'not_found';
+    template '404';
+  }
+
+};
+
 get '/songs/:album/:n.mp3' => sub {
   require_login or return;
 
-  if (my $song = $albums{params->{album}}{songs}{params->{n}}) {
+  if (my $song = $albums{params->{album}}{songs}[params->{n}]) {
     content_type 'audio/mpeg';
     my $file = IO::File->new($song->{path}, 'r');
     return join '', $file->getlines();
@@ -432,23 +450,22 @@ get '/songs/:album/:n.mp3' => sub {
   }
 };
 
-get '/songs/:album/:n.jpg' => sub {
-  if (my $song = $albums{params->{album}}{songs}{params->{n}}) {
-    my ($type, $data) = album_art($song->{path});
-    if ($type) {
-      content_type $type;
-      return $data;
+get '/songs/:album/:n.png' => sub {
+  if (my $song = $albums{params->{album}}{songs}[params->{n}]) {
+    if ($song->{art}) {
+      content_type $song->{art}{type};
+      return $song->{art}{data};
+    } else {
+      return send_file 'unknown.png';
     }
-
-    return send_file 'unknown.jpg';
+  } else {
+    status 'not_found';
+    template '404';
   }
-
-  status 'not_found';
-  template '404';
 };
 
 get '/songs/:album/:n' => sub {
-  if (my $song = $albums{params->{album}}{songs}{params->{n}}) {
+  if (my $song = $albums{params->{album}}{songs}[params->{n}]) {
     template 'song', { 
       song => $song,
       mp3 => MP3::Tag->new($song->{path}),
@@ -460,7 +477,7 @@ get '/songs/:album/:n' => sub {
 };
 
 post '/songs/:album/:n' => sub {
-  if (my $song = $albums{params->{album}}{songs}{params->{n}}) {
+  if (my $song = $albums{params->{album}}{songs}[params->{n}]) {
     if (params->{enqueue}) {
       lock @queue;
       push @queue, $song;
@@ -476,8 +493,9 @@ post '/songs/:album/:n' => sub {
       push @command, 'skip';
 
       flash 'Song playing';
-   }
-   redirect $song->{uri};
+    }
+
+    redirect $song->{uri};
   } else {
     status 'not_found';
     template '404';
@@ -538,75 +556,69 @@ post '/upload' => sub {
 };
 
 get '/queue' => sub {
-  require_login or return;
-
   template 'queue', { queue => \@queue };
 };
 
-post '/queue/remove' => sub {
+post '/queue' => sub {
   require_login or return;
 
-  my @new = ();
-  for (@queue) {
-    if ($_->{id} eq params->{id}) {
-      flash 'Song remove from queue';
+  if (params->{rescan}) {
+    read_songs;
+    flash 'Music directory rescanned';
+  } elsif (params->{skip}) {
+    if ($current) {
+      lock @command;
+      push @command, 'skip';
+
+      flash 'Song skipped';
     } else {
-      push @new, $_;
+      flash warning => 'Not playing';
     }
+  } elsif (params->{start}) {
+    if ($current) {
+      flash warning => 'Already playing';
+    } elsif (%songs) {
+      threads->create('play')->detach;
+      sleep 1;
+      flash 'Playback started';
+    } else {
+      flash warning => 'No songs to play';
+    }
+  } elsif (params->{stop}) {
+    if ($current) {
+      lock @command;
+      push @command, 'stop';
+
+      flash 'Playback stopped';
+    } else {
+      flash warning => 'Not playing';
+    }
+  } elsif (params->{remove}) {
+    my @new = ();
+    for (@queue) {
+      if ($_->{id} eq params->{id}) {
+        flash 'Song removed from queue';
+      } else {
+        push @new, $_;
+      }
+    }
+  
+    lock @queue;
+    @queue = @new;
+  } elsif (params->{play}) {
+    my @new = ();
+    for (@queue) {
+      if ($_->{id} eq params->{id}) {
+        unshift @new, $_;
+        flash 'Song moved to top of queue';
+      } else {
+        push @new, $_;
+      }
+    }
+
+    lock @queue;
+    @queue = @new;
   }
-
-  lock @queue;
-  @queue = @new;
-
-  redirect '/queue';
-};
-
-post '/queue/start' => sub {
-  require_login or return;
-
-  if ($current) {
-    flash warning => 'Already playing';
-  } elsif (%songs) {
-    threads->create('play')->detach;
-    sleep 1;
-    flash 'Playback started';
-  } else {
-    flash warning => 'No songs to play';
-  }
-
-  redirect '/queue';
-};
-
-post '/queue/stop' => sub {
-  require_login or return;
-
-  if ($current) {
-    lock @command;
-    push @command, 'stop';
-    flash 'Playback stopped';
-  } else {
-    flash warning => 'Not playing';
-  }
-
-  redirect '/queue';
-};
-
-post '/queue/rescan' => sub {
-  require_login or return;
-
-  read_songs;
-  flash 'Music directory rescanned';
-
-  redirect '/queue';
-};
-
-post '/queue/skip' => sub {
-  require_login or return;
-
-  lock @command;
-  push @command, 'skip';
-
-  flash 'Song skipped';
 
   redirect '/queue';
 };

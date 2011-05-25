@@ -10,7 +10,7 @@
       <div id="playing">
         <% if current %>
           <a href="<% current.uri %>">
-            <img src="<% current.uri %>.jpg" alt="cover" />
+            <img src="<% current.uri %>.png" alt="cover" />
             <p><% current.title %></p>
             <p><% current.artist %></p>
             <p><% current.album %></p>

@@ -1,11 +1,10 @@
-<div id="albumroll">
-  <% foreach album in albums %>
-    <div class="album">
-      <a href="/songs/<% album.id %>">
-        <img src="/songs/<% album.id %>.jpg" alt="<% album.title %>" />
-      </a>
-      <p><% album.title %></p>
-    </div>
-  <% end %>
-</div>
+<% foreach album in albums %>
+  <div class="album">
+    <a href="/songs/<% album.id %>">
+      <img src="/songs/<% album.id %>.png" alt="<% album.title %>" />
+      <p title="<% album.title %>"><% album.title %></p>
+      <p title="<% album.artist %>"><% album.artist %></p>
+    </a>
+  </div>
+<% end %>
 

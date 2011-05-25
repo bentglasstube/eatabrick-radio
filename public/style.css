@@ -5,7 +5,6 @@
 
 body {
   font-family: verdana, sans-serif;
-  background: #fff url('/watermark.png') no-repeat fixed center center;
 }
 
 #header {
@@ -24,6 +23,7 @@ body {
   list-style: none;
   white-space: nowrap;
   overflow: visible;
+  padding: 0;
 }
 
 #navigation li {
@@ -70,11 +70,17 @@ body {
 #body {
   padding: 0 1em 1em;
   background: #fff;
+  overflow: hidden;
 }
 
 h2 {
   font-size: 1.2em;
   margin: 0.5em 0;
+}
+
+h3 {
+  font-size: 1.1em;
+  margin-bottom: 2em;
 }
 
 fieldset {
@@ -164,7 +170,7 @@ input[readonly] {
   width: 150px;
   height: 150px;
   float: left;
-  margin-bottom: 1em;
+  margin: 0 1em 1em 0;
   border: 1px solid #333;
 }
 
@@ -182,6 +188,7 @@ input[readonly] {
   width: 50px;
   height: 50px;
   margin-left: 0.5em;
+  border: 1px solid #000;
   float: right;
 }
 
@@ -236,27 +243,58 @@ ul.fakeol {
 
 .album {
   float: left;
-  padding: 0.5em;
+  margin: 0 0.5em 0.5em;
 }
 
 .album img {
-  width: 125px;
-  height: 125px;
+  width: 150px;
+  height: 150px;
   border: 1px solid #000;
 }
 
 .album p {
-  width: 125px;
-  height: 1.5em;
-  overflow: hidden;
+  width: 150px;
+  height: 1.2em;
   font-size: 0.7em;
   text-align: center;
+  overflow: hidden;
 }
 
-.album:hover p {
-  overflow: visible;
-  background-color: #fff;
-  text-align: bottom;
+ol {
+  clear: both;
+  padding-left: 2em;
 }
 
+.queue {
+  clear: both;
+  margin-bottom: 1em;
+}
+
+.queue img {
+  float: left;
+  width: 50px;
+  height: 50px;
+  margin-right: 0.5em;
+  border: 1px solid #000;
+}
+
+.queue p {
+  white-space: nowrap;
+  font-size: 0.7em;
+}
+
+.queue form {
+  float: left;
+  margin-right: 0.5em;
+}
+
+.queue form fieldset {
+  margin: 0;
+}
+
+.queue form input {
+  display: block;
+  margin-bottom: 0.5em;
+  width: 100%;
+}
 
