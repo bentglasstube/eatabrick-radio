@@ -3,10 +3,10 @@ layout: "main"
 charset: "UTF-8"
 template: "template_toolkit"
 logger: console
-log: warning
+log: debug
 session: simple
-show_errors: 0
-warnings: 1
+show_errors: 1
+warnings: 0
 startup_info: 0
 
 engines:
@@ -17,9 +17,20 @@ engines:
     PRE_CHOMP: 2
     POST_CHOMP: 2
     
-pidfile: /var/run/eatabrick-radio/run.pid
 admin_pass: awesome
 path_news: data/news
 path_songs: /home/alan/Music/
 stream_uri: http://localhost:8000/eatabrick.m3u
+
+shout:
+  host: localhost
+  port: 8000
+  mount: eatabrick
+  user: source
+  password: awesome
+  name: "Eat a Brick Radio"
+  url: http://radio.eatabrick.org/
+  genre: Instrumental
+  description: "For to be to make you smarter.  For to be to get you dead."
+  public: 1
 

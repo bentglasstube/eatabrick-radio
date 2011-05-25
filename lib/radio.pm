@@ -155,22 +155,17 @@ sub get_next_song {
 sub play {
   debug 'Starting playback thread';
 
-  my $shout = Shout->new(
-    host        => 'localhost',
-    port        => 8000,
-    mount       => setting('mountpoint'),
-    user        => 'source',
-    password    => 'afoevb',
+  my %settings = (
+    host => 'localhost',
+    port => 8000,
     nonblocking => 0,
-    dumpfile    => undef,
-    name        => 'Eat a Brick Radio',
-    url         => 'http://radio.eatabrick.org/',
-    genre       => 'Steve',
-    description => 'For to be to make you smarter.  For to be to get you dead.',
-    format      => SHOUT_FORMAT_MP3,
-    protocol    => SHOUT_PROTOCOL_HTTP,
-    public      => 1,
+    dumpfile => undef,
+    format => SHOUT_FORMAT_MP3,
+    protocol => SHOUT_PROTOCOL_HTTP,
+    public => 1,
   );
+
+  my $shout = Shout->new(%settings, %{setting('shout')});
 
   unless ($shout->open) {
     warning 'Cannot connect to shout server: ' . $shout->get_error;
