@@ -1,0 +1,8 @@
+<img src="<% album.id %>.jpg" alt="cover" />
+<ul class="fakeol">
+  <% foreach n in album.songs.keys.nsort %>
+    <% song = album.songs.$n %>
+    <li><% song.track %>. <a href="<% song.uri %>"><% song.title %></a></li>
+  <% end %>
+</ul>
+

@@ -24,6 +24,7 @@ use Digest::SHA1 'sha1_base64';
 our $VERSION = '0.1';
 
 our %songs   :shared = ();
+our %albums  :shared = ();
 our @queue   :shared = ();
 our @news    :shared = ();
 our $current :shared = undef;
@@ -31,9 +32,11 @@ our @command :shared = ();
 
 MP3::Tag->config(autoinfo => 'ID3v2');
 
-my $pidfile = IO::File->new(setting('pidfile'), 'w') or die $!;
-print $pidfile $$;
-close $pidfile;
+sub urlify {
+  my $string = lc shift;
+  $string =~ s/[^a-z0-9]+/_/g;
+  return $string;
+}
 
 sub add_news {
   my $path = shift;
@@ -64,13 +67,14 @@ sub add_song {
   my $path = shift;
 
   lock %songs;
+  lock %albums;
 
   my $mp3 = MP3::Tag->new($path) or return;
   $mp3->get_tags;
 
   (my $id = sha1_base64($path)) =~ s/\//_/g;
 
-  $songs{$id} = shared_clone({
+  my $song = shared_clone({
     id => $id,
     path => $path,
     artist => $mp3->artist,
@@ -79,6 +83,25 @@ sub add_song {
     album_artist => $mp3->select_id3v2_frame_by_descr('TPE2') || '',
     track => $mp3->track1 || 0,
   });
+  
+  $song->{uri} = sprintf('/songs/%s/%u', urlify($song->{album}), $song->{track});
+
+  lock %albums;
+  lock %songs;
+
+  my $album_id = urlify($song->{album});
+  $albums{$album_id} ||= shared_clone({
+    id => $album_id,
+    title => $song->{album},
+    artist => $song->{album_artist},
+    songs => shared_clone({}),
+  });
+  
+  if ($albums{$album_id}{songs}{$song->{track}}) {
+    warning "Multiple songs for track $song->{track} on album $song->{album}";
+  } else {
+    $albums{$album_id}{songs}{$song->{track}} = $songs{$id} = $song;
+  }
 }
 
 sub read_songs {
@@ -86,10 +109,14 @@ sub read_songs {
 
   lock %songs;
   %songs = ();
+
+  lock %albums;
+  %albums = ();
   
   find({
     no_chdir => 1,
-    wanted => sub { 
+    wanted => sub {
+      return unless -f $_;
       my $type = mimetype($_);
 
       if ($type and $type eq 'audio/mpeg') {
@@ -289,6 +316,23 @@ sub add_new_song {
   }
 }
 
+sub album_art {
+  my $path = shift;
+
+  if (my $mp3 = MP3::Tag->new($path)) {
+    if (my $art = $mp3->select_id3v2_frame_by_descr('APIC')) {
+      $art = $art->{_Data} if ref($art) eq 'HASH';
+      my $type = mimetype(IO::String->new($art));
+
+      if ($type =~ /^image\//) {
+        return $type, $art;
+      }
+    }
+  }
+
+  return undef;
+}
+
 before_template sub {
   my $tokens = shift;
   
@@ -342,56 +386,69 @@ post '/news/delete' => sub {
 };
 
 get '/songs' => sub {
-  my @s = keys %songs;
-
-  @s = grep {$songs{$_}{artist}   eq params->{artist}}   @s if params->{artist};
-  @s = grep {$songs{$_}{album}    eq params->{album}}    @s if params->{album};
-  @s = grep {lc $songs{$_}{title} eq lc params->{title}} @s if params->{title};
-
-  my @s = sort {
-    $songs{$a}{album}  cmp $songs{$b}{album}  or
-    $songs{$a}{track}  <=> $songs{$b}{track}
-  } @s;
-  
-  template 'songs', { songs => [@songs{@s}] };
-};
-
-get '/songs/:id.mp3' => sub {
-  if (session('user') and my $song = $songs{params->{id}}) {
-    content_type 'audio/mpeg';
-
-    my $file = IO::File->new($song->{path}, 'r');
-    join '', $file->getlines();
+  if (my $q = params->{q}) {
+    template 'songs', { songs => search_songs($q) };
   } else {
-    status 'not_found';
-    template '404';
+    template 'albums', { albums => [sort {
+      $albums{$a}{title} cmp $albums{$b}{title}
+    } keys %albums ]};
   }
 };
 
-get '/songs/:id.jpg' => sub {
-  if (my $song = $songs{params->{id}}) {
-    my $mp3 = MP3::Tag->new($song->{path});
-    if (my $art = $mp3->select_id3v2_frame_by_descr('APIC')) {
-      $art = $art->{_Data} if ref($art) eq 'HASH';
-      my $type = mimetype(IO::String->new($art));
-      
-      if ($type =~ /^image/) {
-        content_type $type;
-        return $art;
-      } else {
-        send_file 'unknown.jpg';
-      }
-    } else {
-      send_file 'unknown.jpg';
+get '/songs/:album.jpg' => sub {
+  if (my $album = $albums{params->{album}}) {
+    my ($type, $data) = album_art($album->{songs}{1}{path});
+    if ($type) {
+      content_type $type;
+      return $data;
     }
+    
+    return send_file 'unknown.jpg';
+  }
+
+  status 'not_found';
+  template '404';
+};
+
+get '/songs/:album' => sub {
+  if (my $album = $albums{params->{album}}) {
+    template 'tracks', { album => $album };
   } else {
     status 'not_found';
     template '404';
   }
 };
 
-get '/songs/:id' => sub {
-  if (my $song = $songs{params->{id}}) {
+get '/songs/:album/:n.mp3' => sub {
+  require_login or return;
+
+  if (my $song = $albums{params->{album}}{songs}{params->{n}}) {
+    content_type 'audio/mpeg';
+    my $file = IO::File->new($song->{path}, 'r');
+    return join '', $file->getlines();
+  } else {
+    status 'not_found';
+    template '404';
+  }
+};
+
+get '/songs/:album/:n.jpg' => sub {
+  if (my $song = $albums{params->{album}}{songs}{params->{n}}) {
+    my ($type, $data) = album_art($song->{path});
+    if ($type) {
+      content_type $type;
+      return $data;
+    }
+
+    return send_file 'unknown.jpg';
+  }
+
+  status 'not_found';
+  template '404';
+};
+
+get '/songs/:album/:n' => sub {
+  if (my $song = $albums{params->{album}}{songs}{params->{n}}) {
     template 'song', { 
       song => $song,
       mp3 => MP3::Tag->new($song->{path}),
@@ -402,8 +459,8 @@ get '/songs/:id' => sub {
   }
 };
 
-post '/songs/:id' => sub {
-  if (my $song = $songs{params->{id}}) {
+post '/songs/:album/:n' => sub {
+  if (my $song = $albums{params->{album}}{songs}{params->{n}}) {
     if (params->{enqueue}) {
       lock @queue;
       push @queue, $song;
@@ -419,20 +476,8 @@ post '/songs/:id' => sub {
       push @command, 'skip';
 
       flash 'Song playing';
-    } else {
-      require_login or return;
-
-      my @frames = grep /^[A-Z]{4}$/, params;
-
-      my $mp3 = MP3::Tag->new($song->{path});
-
-      $mp3->select_id3v2_frame_by_descr($_, params->{$_}) for @frames;
-      $mp3->update_tags;
-  
-      flash 'Updated song information';
-    }
-
-    redirect '/songs/' . params->{id}; 
+   }
+   redirect $song->{uri};
   } else {
     status 'not_found';
     template '404';

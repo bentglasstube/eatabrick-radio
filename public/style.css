@@ -229,3 +229,34 @@ ul {
 li.error {
   color: #933;
 }
+
+ul.fakeol {
+  list-style: none;
+}
+
+.album {
+  float: left;
+  padding: 0.5em;
+}
+
+.album img {
+  width: 125px;
+  height: 125px;
+  border: 1px solid #000;
+}
+
+.album p {
+  width: 125px;
+  height: 1.5em;
+  overflow: hidden;
+  font-size: 0.7em;
+  text-align: center;
+}
+
+.album:hover p {
+  overflow: visible;
+  background-color: #fff;
+  text-align: bottom;
+}
+
+

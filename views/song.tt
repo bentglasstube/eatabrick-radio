@@ -5,9 +5,9 @@
 
 <h2>View Song</h2>
 
-<form method="post" action="/songs/<% song.id %>">
+<form method="post" action="<% song.uri %>">
   <fieldset>
-    <img id="cover" src="<% song.id %>.jpg" alt="Cover art" />
+    <img id="cover" src="<% song.uri %>.jpg" alt="Cover art" />
     <dl>
       <% mp3tag('Artist',       'TPE1') %>
       <% mp3tag('Title',        'TIT2') %>
@@ -27,6 +27,6 @@
 </form>
 
 <% if session.user %>
-  <audio src="<% song.id %>.mp3" controls></audio>
+  <audio src="<% song.uri %>.mp3" controls></audio>
 <% end %>
 

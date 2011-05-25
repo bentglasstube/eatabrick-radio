@@ -9,8 +9,8 @@
     <div id="header">
       <div id="playing">
         <% if current %>
-          <a href="/songs/<% current.id %>">
-            <img src="/songs/<% current.id %>.jpg" alt="cover" />
+          <a href="<% current.uri %>">
+            <img src="<% current.uri %>.jpg" alt="cover" />
             <p><% current.title %></p>
             <p><% current.artist %></p>
             <p><% current.album %></p>
