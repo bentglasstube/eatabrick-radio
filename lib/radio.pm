@@ -12,24 +12,31 @@ use File::MimeInfo::Magic;
 use File::Find;
 use File::Temp;
 use File::Copy;
+
 use MP3::Tag;
 use MPEG::Audio::Frame;
+
 use IO::File;
 use IO::String;
+
 use Archive::Zip;
-use Shout;
+
 use POSIX qw(ceil);
 use Digest::SHA1 'sha1_base64';
-use Data::Dumper;
+
+use Shout;
 
 our $VERSION = '0.1';
 
 our %songs   :shared = ();
 our %albums  :shared = ();
-our @queue   :shared = ();
 our @news            = ();
-our $current :shared = undef;
+
+our @queue   :shared = ();
 our @command :shared = ();
+our $current :shared = undef;
+
+our $pb              = ();
 
 MP3::Tag->config(autoinfo => 'ID3v2');
 
@@ -152,6 +159,11 @@ sub get_next_song {
   return $songs{$keys[$#keys * rand]};
 }
 
+sub set_song {
+  lock $current;
+  $current = shift;
+}
+
 sub play {
   debug 'Starting playback thread';
 
@@ -187,10 +199,7 @@ sub play {
       next;
     }
 
-    {
-      lock $current;
-      $current = $song;
-    }
+    set_song $song;
 
     $shout->set_metadata(
       title => $song->{title},
@@ -206,8 +215,9 @@ sub play {
         if ($command eq 'skip') {
           last;
         } elsif ($command eq 'stop') {
-          lock $current;
-          undef $current;
+          debug 'Stopping playback thread';
+
+          set_song undef;
           $shout->close;
           return;
         }
@@ -221,21 +231,35 @@ sub play {
       if ($shout->send($frame->asbin)) {
         $shout->sync;
       } else {
-        lock $current; 
-        undef $current;
-        $shout->close;
         warning 'Sending to shoutcast failed: ' . $shout->get_error;
+
+        set_song undef;
+        $shout->close;
+        
         return;
       }
     }
   } 
 }
 
-read_songs();
-read_news();
+sub start_playback {
+  if ($pb and $pb->is_running) {
+    warning 'Playback thread already running with id ' . $pb->tid;
+    return;
+  } else {
+    my $pb = threads->create('play');
+  }
+}
 
-# Start playback thread
-threads->create('play')->detach;
+sub stop_playback {
+  if ($pb and $pb->is_running) {
+    lock @command;
+    push @command, 'stop';
+    $pb->join;
+  } else {
+    warning 'Playback thread not running';
+  }
+}
 
 sub flash { 
   my $type = @_ > 1 ? shift : '';
@@ -573,17 +597,14 @@ post '/queue' => sub {
     if ($current) {
       flash warning => 'Already playing';
     } elsif (%songs) {
-      threads->create('play')->detach;
-      sleep 1;
+      start_playback;
       flash 'Playback started';
     } else {
       flash warning => 'No songs to play';
     }
   } elsif (params->{stop}) {
     if ($current) {
-      lock @command;
-      push @command, 'stop';
-
+      stop_playback;
       flash 'Playback stopped';
     } else {
       flash warning => 'Not playing';
