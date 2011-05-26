@@ -1,5 +1,6 @@
 .*.swp
-data/music/*
-data/news/*
+data
 config.yml
+logs
+environments
 
