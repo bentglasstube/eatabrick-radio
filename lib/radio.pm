@@ -205,12 +205,15 @@ sub play {
       album => $song->{album}
     );
 
+    debug "Playing $song->{title}";
+
     while (my $frame = MPEG::Audio::Frame->read($file)) {
       threads->yield;
 
       lock @command;
       if (my $command = shift @command) {
         if ($command eq 'skip') {
+          debug 'Skipping song';
           last;
         } elsif ($command eq 'stop') {
           debug 'Stopping playback thread';
