@@ -49,8 +49,6 @@ sub urlify {
 sub add_news {
   my $path = shift;
 
-  lock @news;
-
   my $file = IO::File->new($path, 'r');
   my $post = {
     path => $path,
