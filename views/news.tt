@@ -2,17 +2,7 @@
   <% foreach post in posts %>
     <div class="post">
       <% post.body %>
-      <div class="postinfo">
-        <% ago(post.posted) %>
-        <% if session.user %>
-          <form method="post" action="news/delete" class="inline">
-            <fieldset>
-              <input type="hidden" name="id" value="<% post.id %>" />
-              <input type="image" src="/delete.png" title="Delete post" />
-            </fieldset>
-          </form>
-        <% end %>
-      </div>
+      <div class="postinfo"><% ago(post.posted) %></div>
     </div>
   <% end %>
 <% else %>

@@ -384,25 +384,6 @@ post '/' => sub {
   redirect '/';
 };
 
-post '/news/delete' => sub {
-  require_login or return;
-
-  my @post = grep {$_->{id} eq params->{id}} @news;
-  if ($post[0]) {
-    if (unlink $post[0]->{path}) {
-      flash 'Post deleted';
-      @news = grep {$_->{id} ne params->{id}} @news;
-    } else {
-      flash error => "Could not delete post: $!";
-    }
-
-    redirect '/';
-  } else {
-    status 'not found';
-    template '404';
-  }
-};
-
 get '/songs' => sub {
   if (my $q = params->{q}) {
     template 'songs', { songs => search_songs($q) };
