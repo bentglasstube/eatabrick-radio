@@ -147,6 +147,10 @@ sub read_songs {
   }, setting('path_songs'));
 }
 
+sub read_songs_in_background {
+  threads->create('read_songs')->detach;
+}
+
 sub get_next_song {
   lock @queue;
 
@@ -564,8 +568,8 @@ post '/queue' => sub {
   require_login or return;
 
   if (params->{rescan}) {
-    read_songs;
-    flash 'Music directory rescanned';
+    read_songs_in_background;
+    flash 'Rescanning music directory';
   } elsif (params->{skip}) {
     if ($current) {
       lock @command;
