@@ -107,6 +107,7 @@ sub add_song {
   my $album_id = urlify($song->{album});
   my $artist = $mp3->select_id3v2_frame_by_descr('TPE2') || $song->{artist};
   
+  $song->{album_id} = $album_id;
   $song->{album_uri} = sprintf('/songs/%s', $album_id);
   $song->{uri} = sprintf('/songs/%s/%u', $album_id, $song->{track});
 
@@ -132,12 +133,26 @@ sub add_song {
 sub read_songs {
   debug 'Scanning song directory';
 
-  lock %songs;
-  %songs = ();
+  # remove missing songs
+  foreach (keys %songs) {
+    next if -r $_;
 
-  lock %albums;
-  %albums = ();
-  
+    debug "File $_ removed!";
+
+    if (my $album = $albums{$songs{$_}{album_id}}) {
+      debug "Removing track $songs{$_}{track} from album $album->{title}";
+      delete $album->{songs}[$songs{$_}{track}];
+
+      unless (@{$album->{songs}}) {
+        debug "Album $album->{title} now empty, deleting";
+        delete $albums{$album->{id}};
+      }
+    }
+    
+    delete $songs{$_};
+  }
+
+  # add new songs
   find({
     no_chdir => 1,
     wanted => sub {
@@ -145,7 +160,7 @@ sub read_songs {
       my $type = mimetype($_);
 
       if ($type and $type eq 'audio/mpeg') {
-        add_song($_);
+        add_song($_) unless $songs{$_};
       } else {
         $type ||= 'Unknown type';
         debug "Unusable file $_ ($type)";
