@@ -2,20 +2,14 @@ package player;
 
 use strict;
 use warnings;
-
-use Dancer ':syntax';
-
 use threads;
 use threads::shared;
 
+use Dancer ':syntax';
 use File::MimeInfo::Magic;
 use File::Find;
-
 use MP3::Tag;
 use MPEG::Audio::Frame;
-
-use Digest::SHA1 'sha1_base64';
-
 use Shout;
 
 our $VERSION = '0.1';

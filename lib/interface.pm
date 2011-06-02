@@ -2,20 +2,18 @@ package interface;
 
 use strict;
 use warnings;
-
-use Dancer ':syntax';
-
 use threads;
 use threads::shared;
 
+use Dancer ':syntax';
 use File::MimeInfo::Magic;
 use File::Find;
 use MP3::Tag;
 use IO::File;
 use IO::String;
 use POSIX qw(ceil);
-use Digest::SHA1 'sha1_base64';
 use LWP::UserAgent;
+use Time::Piece;
 
 our $VERSION = '0.1';
 
@@ -277,7 +275,7 @@ get '/' => sub {
 post '/' => sub {
   require_login or return;
 
-  (my $id = sha1_base64(time * rand)) =~ s/\//_/g;
+  my $id = localtime->strftime('%Y%m%d.%H%M%S');
 
   my $path = setting('path_news') . "/$id.txt";
   my $file = IO::File->new($path, 'w');
