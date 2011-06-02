@@ -1,4 +1,4 @@
-package radio;
+package interface;
 
 use strict;
 use warnings;
@@ -10,33 +10,19 @@ use threads::shared;
 
 use File::MimeInfo::Magic;
 use File::Find;
-use File::Temp;
-use File::Copy;
-
 use MP3::Tag;
-use MPEG::Audio::Frame;
-
 use IO::File;
 use IO::String;
-
-use Archive::Zip;
-
 use POSIX qw(ceil);
 use Digest::SHA1 'sha1_base64';
-
-use Shout;
+use LWP::UserAgent;
 
 our $VERSION = '0.1';
 
 our %songs   :shared = ();
 our %albums  :shared = ();
 our @news            = ();
-
-our @queue   :shared = ();
-our @command :shared = ();
-our $current :shared = undef;
-
-our $pb              = ();
+our $ua              = LWP::UserAgent->new;
 
 MP3::Tag->config(autoinfo => 'ID3v2');
 
@@ -44,6 +30,29 @@ sub urlify {
   my $string = lc shift;
   $string =~ s/[^a-z0-9]+/_/g;
   return $string;
+}
+
+sub player_get {
+  my $path = shift || '';
+
+  my $response = $ua->get(setting('player_uri') . $path);
+  if ($response->is_success) {
+    return split /\n/, $response->content;
+  }
+
+  return ();
+}
+
+sub player_post {
+  my $path = shift;
+  my $data = shift || {};
+
+  my $response = $ua->post(setting('player_uri') . $path, $data);
+  if ($response->is_success) {
+    return split /\n/, $response->content;
+  }
+
+  return ();
 }
 
 sub add_news {
@@ -74,10 +83,7 @@ sub add_song {
   my $mp3 = MP3::Tag->new($path) or return;
   $mp3->get_tags;
 
-  (my $id = sha1_base64($path)) =~ s/\//_/g;
-
   my $song = shared_clone({
-    id => $id,
     path => $path,
     artist => $mp3->artist,
     title => $mp3->title,
@@ -118,7 +124,7 @@ sub add_song {
   if ($albums{$album_id}{songs}[$song->{track}]) {
     warning "Multiple songs for track $song->{track} on album $song->{album}";
   } else {
-    $albums{$album_id}{songs}[$song->{track}] = $songs{$id} = $song;
+    $albums{$album_id}{songs}[$song->{track}] = $songs{$path} = $song;
   }
 }
 
@@ -151,121 +157,6 @@ sub read_songs_in_background {
   threads->create('read_songs')->detach;
 }
 
-sub get_next_song {
-  lock @queue;
-
-  return shift @queue if @queue;
-  return undef unless %songs;
-
-  my @keys = keys %songs;
-  return $songs{$keys[$#keys * rand]};
-}
-
-sub set_song {
-  lock $current;
-  $current = shift;
-}
-
-sub play {
-  debug 'Starting playback thread';
-
-  my %settings = (
-    host => 'localhost',
-    port => 8000,
-    nonblocking => 0,
-    dumpfile => undef,
-    format => SHOUT_FORMAT_MP3,
-    protocol => SHOUT_PROTOCOL_HTTP,
-    public => 1,
-  );
-
-  my $shout = Shout->new(%settings, %{setting('shout')});
-
-  unless ($shout->open) {
-    warning 'Cannot connect to shout server: ' . $shout->get_error;
-    return;
-  }
-
-  my $buffer = '';
-
-  while (1) { 
-    my $song = get_next_song();
-    unless ($song) {
-      warning 'No song to play';
-      last;
-    }
-
-    my $file = IO::File->new($song->{path}, 'r');
-    unless ($file) {
-      warning "Unable to open $song->{path}: $!";
-      next;
-    }
-
-    set_song $song;
-
-    $shout->set_metadata(
-      title => $song->{title},
-      artist => $song->{artist},
-      album => $song->{album}
-    );
-
-    debug "Playing $song->{title}";
-
-    while (my $frame = MPEG::Audio::Frame->read($file)) {
-      threads->yield;
-
-      lock @command;
-      if (my $command = shift @command) {
-        if ($command eq 'skip') {
-          debug 'Skipping song';
-          last;
-        } elsif ($command eq 'stop') {
-          debug 'Stopping playback thread';
-
-          set_song undef;
-          $shout->close;
-          return;
-        }
-      }
-
-      $shout->set_audio_info(
-        SHOUT_AI_BITRATE => $frame->bitrate,
-        SHOUT_AI_SAMPLERATE => $frame->sample,
-      );
-
-      if ($shout->send($frame->asbin)) {
-        $shout->sync;
-      } else {
-        warning 'Sending to shoutcast failed: ' . $shout->get_error;
-
-        set_song undef;
-        $shout->close;
-        
-        return;
-      }
-    }
-  } 
-}
-
-sub start_playback {
-  if ($pb and $pb->is_running) {
-    warning 'Playback thread already running with id ' . $pb->tid;
-    return;
-  } else {
-    my $pb = threads->create('play');
-  }
-}
-
-sub stop_playback {
-  if ($pb and $pb->is_running) {
-    lock @command;
-    push @command, 'stop';
-    $pb->join;
-  } else {
-    warning 'Playback thread not running';
-  }
-}
-
 sub flash { 
   my $type = @_ > 1 ? shift : '';
   my $message = shift;
@@ -287,7 +178,7 @@ sub require_login {
 sub authenticate {
   my ($name, $pass) = @_;
   
-  return $pass eq setting('admin_pass');
+  return $pass eq setting('interface')->{password};
 }
 
 sub ago {
@@ -325,42 +216,44 @@ sub ago {
   return sprintf('%u %s%s ago', $count, $unit, $count == 1 ? '' : 's');
 }
 
-sub add_new_song {
+sub skip_song {
+  player_post('skip');
+  flash 'Song skipped';
+}
+
+sub enqueue_song {
   my $path = shift;
+  player_post('queue', { path => $path });
+}
 
-  if (my $mp3 = MP3::Tag->new($path)) {
-    $mp3->get_tags;
-
-    my $title = $mp3->title or return 'Missing title';
-    my $artist = $mp3->select_id3v2_frame_by_descr('TPE2') || $mp3->artist or return 'Missing artist';
-    my $album = $mp3->album or return 'Missing album';
-    my $track = $mp3->track1 or return 'Missing track';
-
-    my $dir = sprintf('%s/%s - %s', setting('path_songs'), $artist, $album);
-    my $file = sprintf('%02u %s.mp3', $track, $title);
-    my $new = "$dir/$file";
-
-    return 'File already exists' if -e $new;
-
-    mkdir $dir;
-    copy $path, $new or return "Failed to copy file: $!";
-    if (my $song = add_song($new)) {
+sub current_song {
+  if (my ($path) = player_get) {
+    if (my $song = $songs{$path}) {
       return $song;
     } else {
-      return 'Failed to add song';
+      warning "Couldn't find song matching $path";
     }
   } else {
-    return "Could not open $path";
+    return undef;
   }
 }
 
+sub get_queue {
+  my @paths = player_get('queue');
+
+  debug $_ for @paths;
+  return [map $songs{$_}, @paths];
+}
 
 before_template sub {
   my $tokens = shift;
   
-  $tokens->{current} = $current; 
+  $tokens->{current} = current_song; 
   $tokens->{ago} = \&ago;
-  $tokens->{stream_uri} = setting('stream_uri');
+  $tokens->{stream_uri} = sprintf 'http://%s:%u/%s.m3u', 
+    setting('shout')->{host},
+    setting('shout')->{port},
+    setting('shout')->{mount};
 };
 
 get '/' => sub { 
@@ -427,10 +320,7 @@ post '/songs/:album' => sub {
   if (my $album = $albums{params->{album}}) {
     if (params->{enqueue}) {
       require_login or return;
-
-      lock @queue;
-      push @queue, grep { defined $_ } @{$album->{songs}};
-
+      enqueue_song $_->{path} for grep { defined $_ } @{$album->{songs}};
       flash 'Album added to queue';
     }
 
@@ -484,22 +374,9 @@ get '/songs/:album/:n' => sub {
 post '/songs/:album/:n' => sub {
   if (my $song = $albums{params->{album}}{songs}[params->{n}]) {
     if (params->{enqueue}) {
-      lock @queue;
-      push @queue, $song;
-
-      flash 'Song enqueued';
-    } elsif (params->{play}) {
-      require_login or return;
-
-      lock @queue;
-      unshift @queue, $song;
-
-      lock @command;
-      push @command, 'skip';
-
-      flash 'Song playing';
+      enqueue_song $song->{path};
+      flash 'Song added to the queue';
     }
-
     redirect $song->{uri};
   } else {
     status 'not_found';
@@ -507,61 +384,8 @@ post '/songs/:album/:n' => sub {
   }
 };
 
-get '/upload' => sub { 
-  require_login or return;
-
-  template 'upload';
-};
-
-post '/upload' => sub {
-  require_login or return;
-
-  my @results = ();
-
-  if (my $file = upload('upload')) {
-    my $type = mimetype($file->tempname);
-    if ($type eq 'audio/mpeg') {
-      my $result = add_new_song($file->tempname);
-      if (ref $result) {
-        flash 'Song added';
-        redirect "/songs/$result->{id}";
-        return;
-      } else {
-        flash warning => $result;
-      }
-    } elsif ($type eq 'application/zip') {
-      if (my $zip = Archive::Zip->new($file->tempname)) {
-
-        for my $member ($zip->members) {
-          my $file = IO::String->new($zip->contents($member));
-          next unless mimetype($file) eq 'audio/mpeg';
-
-          my $temp = File::Temp->new->filename;
-          $zip->extractMemberWithoutPaths($member, $temp);
-          my $result = add_new_song($temp);
-          if (ref $result) {
-            push @results, { filename => $member->fileName, song => $result };
-          } else {
-            push @results, { filename => $member->fileName, error => $result };
-          }
-        }
-
-        flash warning => 'No music files in zip' unless @results;
-      } else {
-        flash error => "Could not process zip archive";
-      }
-    } else {
-      flash warning => "Cannot process $type files";
-    }
-  } else {
-    flash warning => 'Please select a file';
-  }
-
-  template 'upload', { results => \@results };
-};
-
 get '/queue' => sub {
-  template 'queue', { queue => \@queue };
+  template 'queue', { queue => get_queue };
 };
 
 post '/queue' => sub {
@@ -569,57 +393,11 @@ post '/queue' => sub {
 
   if (params->{rescan}) {
     read_songs_in_background;
+    player_post('reload');
     flash 'Rescanning music directory';
   } elsif (params->{skip}) {
-    if ($current) {
-      lock @command;
-      push @command, 'skip';
-
-      flash 'Song skipped';
-    } else {
-      flash warning => 'Not playing';
-    }
-  } elsif (params->{start}) {
-    if ($current) {
-      flash warning => 'Already playing';
-    } elsif (%songs) {
-      start_playback;
-      flash 'Playback started';
-    } else {
-      flash warning => 'No songs to play';
-    }
-  } elsif (params->{stop}) {
-    if ($current) {
-      stop_playback;
-      flash 'Playback stopped';
-    } else {
-      flash warning => 'Not playing';
-    }
-  } elsif (params->{remove}) {
-    my @new = ();
-    for (@queue) {
-      if ($_->{id} eq params->{id}) {
-        flash 'Song removed from queue';
-      } else {
-        push @new, $_;
-      }
-    }
-  
-    lock @queue;
-    @queue = @new;
-  } elsif (params->{play}) {
-    my @new = ();
-    for (@queue) {
-      if ($_->{id} eq params->{id}) {
-        unshift @new, $_;
-        flash 'Song moved to top of queue';
-      } else {
-        push @new, $_;
-      }
-    }
-
-    lock @queue;
-    @queue = @new;
+    skip_song();
+    flash 'Song skipped';
   }
 
   redirect '/queue';

@@ -1,16 +1,17 @@
+<% if session.user %>
+  <form method="post" action="/queue">
+    <fieldset>
+      <input type="submit" name="rescan" value="Rescan Music Folder" />
+      <% if current %>
+        <input type="submit" name="skip" value="Skip Current Song" />
+      <% end %>
+    </fieldset>
+  </form>
+<% end %>
+
 <% if queue.size > 0 %>
   <% for song in queue %>
     <div class="queue">
-      <% if session.user %>
-        <form class="inline" method="post" action="/queue">
-          <fieldset>
-            <input type="hidden" name="id" value="<% song.id %>" />
-            <input type="submit" name="remove" value="Remove" />
-            <input type="submit" name="play" value="Play Next" />
-          </fieldset>
-        </form>
-      <% end %>
-
       <img src="<% song.uri %>.png" alt="cover" />
       <p><a href="<% song.uri %>"><% song.title %></a></p>
       <p><% song.artist %></p>
@@ -21,16 +22,3 @@
   <p class="empty">No songs in queue</p>
 <% end %>
 
-<% if session.user %>
-  <form method="post" action="/queue">
-    <fieldset>
-      <input type="submit" name="rescan" value="Rescan Music Folder" />
-      <% if current %>
-        <input type="submit" name="skip" value="Skip Current Song" />
-        <input type="submit" name="stop" value="Stop Playback" />
-      <% else %>
-        <input type="submit" name="start" value="Start Playback" />
-      <% end %>
-    </fieldset>
-  </form>
-<% end %>

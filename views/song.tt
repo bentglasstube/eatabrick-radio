@@ -4,9 +4,6 @@
 
 <form method="post" action="<% song.uri %>">
   <fieldset>
-    <% if session.user %>
-      <input type="submit" name="play" value="Play Now" />
-    <% end %>
     <input type="submit" name="enqueue" value="Enqueue" />
   </fieldset>
 </form>
