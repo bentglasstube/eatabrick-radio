@@ -23,14 +23,10 @@ player_uri: http://localhost:3001/
 stream_uri: http://localhost:8000/eatabrick.m3u
 
 interface:
-  logfile: logs/interface.log
-  pidfile: run/interface.pid 
   password: awesome
   port: 3000
 
 player:
-  logfile: logs/player.log
-  pidfile: run/player.pid
   port: 3001
 
 shout:
