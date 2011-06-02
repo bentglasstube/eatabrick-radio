@@ -20,6 +20,7 @@ engines:
 path_songs: /home/alan/Music/
 path_news: data/news/
 player_uri: http://localhost:3001/
+stream_uri: http://localhost:8000/eatabrick.m3u
 
 interface:
   logfile: logs/interface.log
