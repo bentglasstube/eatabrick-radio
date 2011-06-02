@@ -23,6 +23,7 @@ our %songs   :shared = ();
 our %albums  :shared = ();
 our @news            = ();
 our $ua              = LWP::UserAgent->new;
+our $scanner         = undef;
 
 MP3::Tag->config(autoinfo => 'ID3v2');
 
@@ -154,7 +155,8 @@ sub read_songs {
 }
 
 sub read_songs_in_background {
-  threads->create('read_songs')->detach;
+  return if $scanner and $scanner->is_running;
+  $scanner = threads->create('read_songs');
 }
 
 sub flash { 
@@ -279,6 +281,8 @@ post '/' => sub {
 };
 
 get '/songs' => sub {
+  flash warning => 'Music scan in progress' if $scanner && $scanner->is_running;
+
   if (my $q = params->{q}) {
     template 'songs', { songs => search_songs($q) };
   } else {
@@ -305,6 +309,8 @@ get '/songs/:album.png' => sub {
 };
 
 get '/songs/:album' => sub {
+  flash warning => 'Music scan in progress' if $scanner && $scanner->is_running;
+
   if (my $album = $albums{params->{album}}) {
     template 'tracks', { album => $album };
   } else {
