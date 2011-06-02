@@ -250,10 +250,7 @@ before_template sub {
   
   $tokens->{current} = current_song; 
   $tokens->{ago} = \&ago;
-  $tokens->{stream_uri} = sprintf 'http://%s:%u/%s.m3u', 
-    setting('shout')->{host},
-    setting('shout')->{port},
-    setting('shout')->{mount};
+  $tokens->{stream_uri} = setting('stream_uri');
 };
 
 get '/' => sub { 

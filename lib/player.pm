@@ -43,25 +43,27 @@ sub start_playback {
 }
 
 sub read_songs {
-  debug 'Scanning song directory';
+  threads->create(sub {
+    debug 'Scanning song directory';
   
-  lock @songs;
-  @songs = ();
+    lock @songs;
+    @songs = ();
 
-  find({
-    no_chdir => 1,
-    wanted => sub {
-      return unless -f $_;
-      my $type = mimetype($_);
-
-      if ($type and $type eq 'audio/mpeg') {
-        push @songs, $_;
-      } else {
-        $type ||= 'Unknown type';
-        debug "Unusable file $_ ($type)";
-      }
-    },
-  }, setting('path_songs'));
+    find({
+      no_chdir => 1,
+      wanted => sub {
+        return unless -f $_;
+        my $type = mimetype($_);
+  
+        if ($type and $type eq 'audio/mpeg') {
+          push @songs, $_;
+        } else {
+          $type ||= 'Unknown type';
+          debug "Unusable file $_ ($type)";
+        }
+      },
+    }, setting('path_songs'));
+  });
 }
 
 sub play {
