@@ -17,27 +17,8 @@ engines:
     PRE_CHOMP: 2
     POST_CHOMP: 2
 
-path_songs: /home/alan/Music/
-path_news: data/news/
-player_uri: http://localhost:3001/
-stream_uri: http://localhost:8000/eatabrick.m3u
-
-interface:
-  password: awesome
-  port: 3000
-
-player:
-  port: 3001
-
-shout:
-  host: localhost
-  port: 8000
-  mount: eatabrick
-  user: source
-  password: awesome
-  name: "Eat a Brick Radio"
-  url: http://radio.eatabrick.org/
-  genre: Instrumental
-  description: "For to be to make you smarter.  For to be to get you dead."
-  public: 1
-
+news_path: /var/radio/news/
+stream_uri: http://localhost:8000/radio.ogg
+admin_password: awesome
+queue_keep: 1
+queue_size: 5

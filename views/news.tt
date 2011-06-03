@@ -1,12 +1,8 @@
-<% if posts.size > 0 %>
-  <% foreach post in posts %>
-    <div class="post">
-      <% post.body %>
-      <div class="postinfo"><% ago(post.posted) %></div>
-    </div>
-  <% end %>
-<% else %>
-  <p class="empty">There is no news.</p>
+<% foreach post in posts %>
+  <div class="post">
+    <% post.body %>
+    <div class="postinfo"><% ago(post.posted) %></div>
+  </div>
 <% end %>
 
 <% if session.user %> 
