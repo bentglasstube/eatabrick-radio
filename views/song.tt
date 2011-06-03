@@ -1,14 +1,10 @@
-<img id="cover" src="<% song.uri %>.png" alt="Cover art" />
+<img id="cover" src="/songs/<% song.album.uri %>.png" alt="Cover art" />
 <h2><% song.track %>. <% song.title %></h2>
-<h3><% song.artist %> - <% song.album %></h3>
+<h3><% song.artist %> - <% song.album.title %></h3>
 
-<form method="post" action="<% song.uri %>">
+<form method="post" action="/songs/<% song.uri %>">
   <fieldset>
     <input type="submit" name="enqueue" value="Enqueue" />
   </fieldset>
 </form>
-
-<% if session.user %>
-  <audio src="<% song.uri %>.mp3" controls></audio>
-<% end %>
 

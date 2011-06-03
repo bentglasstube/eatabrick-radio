@@ -1,7 +1,7 @@
 <% foreach album in albums %>
   <div class="album">
-    <a href="/songs/<% album.id %>">
-      <img src="/songs/<% album.id %>.png" alt="<% album.title %>" />
+    <a href="/songs/<% album.uri %>">
+      <img src="/songs/<% album.uri %>.png" alt="<% album.title %>" />
       <p title="<% album.title %>"><% album.title %></p>
       <p title="<% album.artist %>"><% album.artist %></p>
     </a>

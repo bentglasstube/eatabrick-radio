@@ -9,14 +9,12 @@
     <div id="header">
       <div id="playing">
         <% if current %>
-          <a href="<% current.uri %>">
-            <img src="<% current.uri %>.png" alt="cover" />
+          <a href="/songs/<% current.uri %>">
+            <img src="/songs/<% current.album.uri %>.png" alt="cover" />
             <p><% current.title %></p>
             <p><% current.artist %></p>
-            <p><% current.album %></p>
+            <p><% current.album.title %></p>
           </a>
-        <% else %>
-          <p>Not playing</p>
         <% end %>
       </div>
       <h1>Eat a Brick Radio</h1>

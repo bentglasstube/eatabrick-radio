@@ -1,11 +1,11 @@
-<img id="cover" src="<% album.id %>.png" alt="cover" />
+<img id="cover" src="<% album.uri %>.png" alt="cover" />
 <h2><% album.title %></h2>
 <h3><% album.artist %></h3>
 
 <% if session.user %>
   <form method="post" action="<% album.uri %>">
     <fieldset>
-      <input type="hidden" name="album" value="<% album.id %>" />
+      <input type="hidden" name="album" value="<% album.uri %>" />
       <input type="submit" name="enqueue" value="Enqueue" />
     </fieldset>
   </form>
@@ -13,7 +13,7 @@
 
 <ol>
   <% various = album.artist == 'Various Artists' %>
-  <% foreach song in album.songs %>
+  <% foreach song in album.tracks %>
     <% next if loop.count == 1 %>
     <li>
       <% if song %>
