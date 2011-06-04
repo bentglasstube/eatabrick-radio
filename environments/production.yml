@@ -1,0 +1,6 @@
+logger: file
+log: warning
+session: simple
+show_errors: 0
+warnings: 1
+

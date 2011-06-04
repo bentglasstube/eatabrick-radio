@@ -2,12 +2,6 @@ appname: "Eat a Brick Radio"
 layout: "main"
 charset: "UTF-8"
 template: "template_toolkit"
-logger: console
-log: debug
-session: simple
-show_errors: 1
-warnings: 0
-startup_info: 0
 
 engines:
   template_toolkit:

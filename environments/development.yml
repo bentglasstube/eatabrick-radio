@@ -1,0 +1,6 @@
+logger: console
+log: debug
+session: simple
+show_errors: 1
+warnings: 0
+

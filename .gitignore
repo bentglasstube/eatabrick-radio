@@ -1,7 +1,4 @@
 .*.swp
-data
 config.yml
 logs
-environments
-run
 
