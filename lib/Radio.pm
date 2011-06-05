@@ -82,11 +82,26 @@ before_template sub {
 };
 
 get '/' => sub { 
-  template 'news', { posts => [] };
-};
+  my @news = ();
 
-get '/index.html' => sub {
-  template 'news', { posts => [] };
+  my $path = setting('news_path');
+  for (<$path/*.txt>) {
+    if (my $file = IO::File->new($_, 'r')) {
+      push @news, {
+        path => $_,
+        posted => ($file->stat)[9],
+        body => join('', $file->getlines),
+      };
+    } else {
+      warning "Couldn't open $_ for reading: $!";
+    }
+  }
+
+  @news = sort {$b->{posted} <=> $a->{posted}} @news;
+  my $count = setting('news_max') || 10;
+  @news = grep {$_} @news[0 .. ($count - 1)];
+
+  template 'news', { posts => \@news };
 };
 
 post '/' => sub {
@@ -94,7 +109,7 @@ post '/' => sub {
 
   my $id = localtime->strftime('%Y%m%d.%H%M%S');
 
-  my $path = setting('path_news') . "/$id.txt";
+  my $path = setting('news_path') . "/$id.txt";
   my $file = IO::File->new($path, 'w');
 
   if ($file) {
