@@ -7,9 +7,8 @@
 
   <body>
     <div id="header">
-      <div id="playing">
-        <% include 'current.tt' %>
-      </div>
+      <div id="playing"><% include 'current.tt' %></div>
+      <img src="/bricky.png" alt="bricky" />
       <h1>Eat a Brick Radio</h1>
       <% include 'nav.tt' %>
     </div>
