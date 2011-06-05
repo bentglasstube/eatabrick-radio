@@ -81,9 +81,12 @@ sub search {
   my $self = shift;
   my $search = shift;
 
-  my @songs = $self->collection->songs_with_title_partial($search);
-
-  return [map $self->_song($_), @songs];
+  return [
+    map $self->_song($_),
+    $self->collection->songs_with_title_partial($search),
+    $self->collection->songs_by_artist_partial($search),
+    $self->collection->songs_from_album_partial($search),
+  ];
 }
 
 sub _uri {
