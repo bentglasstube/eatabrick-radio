@@ -137,7 +137,7 @@ get '/songs/:album.png' => sub {
       content_type $album->{art}{type};
       return $album->{art}{data};
     } else {
-      return send_file 'unknown.png';
+      return redirect '/unknown.png';
     }
   } else {
     status 'not_found';
