@@ -24,9 +24,11 @@ body {
   white-space: nowrap;
   overflow: visible;
   padding: 0;
+  clear: both;
 }
 
 #navigation li {
+  font-size: 1.1em;
   display: inline;
   padding: 0em 2em;
   border: 1px solid #000;
@@ -44,6 +46,35 @@ body {
 
 #navigation li:hover  {
   background: #fff;
+}
+
+#search {
+  float: right;
+  border: none !important;
+  padding: 0 !important;
+  margin-top: -0.2em;
+}
+
+#search:hover {
+  background: none !important;
+}
+
+#search form {
+  margin-bottom: 0.1em;
+}
+
+#search fieldset {
+  margin: 0;
+}
+
+#search input {
+  border: 1px solid #000;
+  padding-left: 30px;
+  background: #fff url('search.png') no-repeat top left;
+}
+
+#search input[type=submit] {
+  display: none;
 }
 
 #flash {
@@ -186,7 +217,7 @@ input[readonly] {
   font-size: 0.7em;
   text-decoration: none;
   margin-bottom: 0.2em;
-  width: 50%;
+  width: 400px;
 }
 
 #playing img {
@@ -201,6 +232,7 @@ input[readonly] {
   color: #000;
   text-align: right;
   white-space: nowrap;
+  overflow: hidden;
 }
 
 form dl {

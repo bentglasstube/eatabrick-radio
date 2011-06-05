@@ -5,6 +5,14 @@
 <% end -%>
 
 <ul id="navigation">
+  <li id="search">
+    <form method="get" action="/songs">
+      <fieldset>
+        <input name="search" />
+        <input type="submit" value="Go" />
+      </fieldset>
+    </form>
+  </li>
   <% link('/', 'News') %>
   <% link('/songs', 'Songs') %>
   <% link('/queue', 'Queue') %>

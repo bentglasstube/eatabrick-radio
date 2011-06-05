@@ -77,6 +77,15 @@ sub updatedb {
   $self->SUPER::updatedb;
 }
 
+sub search {
+  my $self = shift;
+  my $search = shift;
+
+  my @songs = $self->collection->songs_with_title_partial($search);
+
+  return [map $self->_song($_), @songs];
+}
+
 sub _uri {
   my $string = lc shift;
   $string =~ s/\s+/_/g;

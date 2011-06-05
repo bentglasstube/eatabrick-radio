@@ -125,7 +125,7 @@ post '/' => sub {
 
 get '/songs' => sub {
   if (my $q = params->{search}) {
-    template 'songs', { songs => [] };
+    template 'songs', { songs => $station->search($q) };
   } else {
     template 'albums', { albums => $station->albums };
   }

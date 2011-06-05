@@ -1,33 +1,12 @@
-<h2>Songs</h2>
-<form method="get" action="/songs">
-  <fieldset>
-    <input type="text" name="title" value="<% params.title %>" />
-    <input type="submit" value="Search" />
-  </fieldset>
-</form>
-
 <% if songs.size > 0 %>
-  <table>
-    <thead>
-      <tr>
-        <td>Album</td>
-        <td>Artist</td>
-        <td>Title</td>
-      </tr>
-    </thead>
-    <tbody>
-      <% macro narrow(song, p) block %>
-        <a href="/songs?<% p %>=<% song.$p |uri %>"><% song.$p %></a>
-      <% end %>
-      <% foreach song in songs %>
-        <tr>
-          <td><% narrow(song, 'album') %></td>
-          <td><% narrow(song, 'artist') %></td>
-          <td><a href="/songs/<% song.id %>"><% song.title %></a></td>
-        </tr>
-      <% end %>
-    </tbody>
- </table>
+  <% for song in songs %>
+    <div class="queue <% if current.file == song.file %>current<% end %>">
+      <img src="/songs/<% song.album.uri %>.png" alt="cover" />
+      <p><a href="/songs/<% song.uri %>"><% song.title %></a></p>
+      <p><% song.artist %></p>
+      <p><a href="/songs/<% song.album.uri %>"><% song.album.title %></a></p>
+    </div>
+  <% end %>
 <% else %>
   <p class="empty">There are no matching songs.</p>
 <% end %>

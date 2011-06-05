@@ -1,0 +1,9 @@
+<% if current %>
+  <a href="/songs/<% current.uri %>">
+    <img src="/songs/<% current.album.uri %>.png" alt="cover" />
+    <p><% current.title %></p>
+    <p><% current.artist %></p>
+    <p><% current.album.title %></p>
+  </a>
+<% end %>
+
