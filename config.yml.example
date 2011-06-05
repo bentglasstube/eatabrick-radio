@@ -12,6 +12,7 @@ engines:
     POST_CHOMP: 2
 
 news_path: /var/radio/news/
+music_path: /var/radio/music/
 stream_uri: http://localhost:8000/radio.ogg
 admin_password: awesome
 queue_keep: 1

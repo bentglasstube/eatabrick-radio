@@ -5,6 +5,9 @@ use warnings;
 
 use base 'Audio::MPD';
 
+use MP3::Tag;
+#use Dancer ':syntax';
+
 sub promote {
   my $class = shift;
   my $object = shift;
@@ -106,6 +109,19 @@ sub _album {
 
     my $song = $self->_song($_, $album);
     $album->{tracks}[$song->{track}] = $song;
+  }
+
+  # album art
+  my $path = '/var/lib/mpd/music/' . $songs[0]->file;
+  if (my $mp3 = MP3::Tag->new($path)) {
+    if (my $apic = $mp3->select_id3v2_frame('APIC')) {
+      $album->{art} = {
+        data => $apic->{_Data},
+        type => $apic->{'MIME Type'} || 'image/jpeg',
+      };
+    }
+  } else {
+    warn "Error reading $path: $!";
   }
 
   return $self->{_albums}{$title} = $album; 

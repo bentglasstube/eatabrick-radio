@@ -11,7 +11,7 @@ our $station = Radio::Station->promote(mpd);
 
 sub manage {
   while (1) {
-    my $status = $station->status;
+    my $status = $station->status or last;
     if ($status->state eq 'play') {
       my $keep = setting('queue_keep') || 1;
       $station->playlist->delete(0) while $station->current->pos > $keep;
@@ -26,4 +26,7 @@ sub manage {
 
     sleep 1;
   }
+
+  warning 'Queue manager exited';
 }
+
