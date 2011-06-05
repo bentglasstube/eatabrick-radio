@@ -293,3 +293,7 @@ ol {
 .current p {
   font-weight: bold;
 }
+
+.error {
+  text-align: center;
+}

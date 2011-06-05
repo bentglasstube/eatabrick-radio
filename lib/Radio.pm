@@ -85,6 +85,10 @@ get '/' => sub {
   template 'news', { posts => [] };
 };
 
+get '/index.html' => sub {
+  template 'news', { posts => [] };
+};
+
 post '/' => sub {
   require_login or return;
 
