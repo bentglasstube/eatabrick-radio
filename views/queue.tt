@@ -2,7 +2,7 @@
   <form method="post" action="/queue">
     <fieldset>
       <input type="submit" name="rescan" value="Rescan Music Folder" />
-      <% if current %>
+      <% if station.current %>
         <input type="submit" name="skip" value="Skip Current Song" />
         <input type="submit" name="stop" value="Stop Playback" />
       <% else %>
