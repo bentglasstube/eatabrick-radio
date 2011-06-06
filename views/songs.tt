@@ -1,6 +1,6 @@
 <% if songs.size > 0 %>
   <% for song in songs %>
-    <div class="queue <% if current.file == song.file %>current<% end %>">
+    <div class="queue <% if station.current.file == song.file %>current<% end %>">
       <img src="/songs/<% song.album.uri %>.png" alt="cover" />
       <p><a href="/songs/<% song.uri %>"><% song.title %></a></p>
       <p><% song.artist %></p>

@@ -1,9 +1,12 @@
-<% if current %>
-  <a href="/songs/<% current.uri %>">
-    <img src="/songs/<% current.album.uri %>.png" alt="cover" />
-    <p><% current.title %></p>
-    <p><% current.artist %></p>
-    <p><% current.album.title %></p>
+<% if station.current %>
+  <a href="/songs/<% station.current.uri %>">
+    <img src="/songs/<% station.current.album.uri %>.png" alt="cover" />
   </a>
+  <p><% station.current.title %></p>
+  <p><% station.current.artist %></p>
+  <p><% station.current.album.title %></p>
+  <p class="time">
+    <span style="width: <% station.status.time.percent %>%">&nbsp;</span>
+  </p>
 <% end %>
 

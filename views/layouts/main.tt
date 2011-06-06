@@ -3,6 +3,17 @@
   <head>
     <title>Eat a Brick Radio</title>
     <link rel="stylesheet" href="/style.css" />
+    <script type="text/javascript" src="/jquery.min.js"></script>
+    <script type="text/javascript" src="/jquery.periodicalupdater.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function() {
+        $.PeriodicalUpdater({ 
+          url: '/current',
+          minTimeout: 100,
+          maxTimeout: 1000,
+        }, function(data) { $('#playing').html(data) } )
+      });
+    </script>
   </head>
 
   <body>

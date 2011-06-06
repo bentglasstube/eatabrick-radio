@@ -76,7 +76,7 @@ sub ago {
 before_template sub {
   my $tokens = shift;
   
-  $tokens->{current} = $station->current; 
+  $tokens->{station} = $station; 
   $tokens->{ago} = \&ago;
   $tokens->{stream_uri} = setting('stream_uri');
 };
@@ -195,7 +195,10 @@ post '/songs/:album/:n' => sub {
 };
 
 get '/queue' => sub {
-  template 'queue', { queue => $station->queue };
+  my %override = ();
+  $override{layout} = undef if request->is_ajax;
+
+  template 'queue', { queue => $station->queue }, \%override;
 };
 
 post '/queue' => sub {
@@ -242,6 +245,10 @@ get '/logout' => sub {
   session(user => undef);
   flash 'You have been logged out.';
   redirect '/';
+};
+
+get '/current' => sub {
+  template 'current', {}, { layout => undef };
 };
 
 # default route (404)
