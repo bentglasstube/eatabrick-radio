@@ -1,5 +1,5 @@
 logger: console
-log: debug
+log: core
 session: simple
 show_errors: 1
 warnings: 0
