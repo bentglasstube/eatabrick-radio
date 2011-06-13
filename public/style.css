@@ -194,6 +194,7 @@ input[readonly] {
   margin-bottom: 0.2em;
   width: 350px;
   height: 60px;
+  display: none;
 }
 
 #playing img {
