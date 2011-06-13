@@ -80,6 +80,8 @@ before_template sub {
   $tokens->{station} = $station; 
   $tokens->{ago} = \&ago;
   $tokens->{stream_uri} = setting('stream_uri');
+
+  flash 'Updating music database' if $station->status->updating_db;
 };
 
 get '/' => sub { 
@@ -172,10 +174,7 @@ post '/songs/:album' => sub {
 };
 
 get '/queue' => sub {
-  my %override = ();
-  $override{layout} = undef if request->is_ajax;
-
-  template 'queue', { queue => $station->queue }, \%override;
+  template 'queue', { queue => $station->queue };
 };
 
 post '/queue' => sub {
@@ -183,7 +182,6 @@ post '/queue' => sub {
     require_login or return;
 
     $station->updatedb();
-    flash 'Rescanning music directory';
   } elsif (params->{skip}) {
     require_login or return;
 

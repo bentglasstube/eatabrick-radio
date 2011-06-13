@@ -6,38 +6,46 @@
     <script type="text/javascript" src="/jquery.min.js"></script>
     <script type="text/javascript">
       var current = {};
-      var start = 0;
+      var max_timeout = 5000;
 
       function update_meta_info() {
         $.get('/current', function(song) {
           if (song.uri != current.uri) {
-            $('#playing img').attr('src', song.image);
-            $('#title').text(song.title);
-            $('#artist').text(song.artist);
-            $('#album').text(song.album);
-
             current = song;
+
+            // animation for song changes
+            $('#playing').stop();
+            $('#playing').fadeOut(250, function() {
+              // update elements
+              $('#playing a').attr('href', '/songs/' + song.uri);
+              $('#playing img').attr('src', song.image);
+              $('#title').text(song.title);
+              $('#artist').text(song.artist);
+              $('#album').text(song.album);
+
+              // reapper
+              $('#playing').fadeIn(250);
+            });
+
           }
 
-          start = new Date() - song.pos * 1000;
-          update_progress();
+          // set playback bar
+          var bar = $('#time span');
+          bar.width((song.pos / song.length * 100) + '%');
 
-          var timeout = 5000;
-          var left = song.length - song.pos;
-          if (left < 5) timeout = left * 1000;
+          // animate playback bar
+          var timeout = (song.length - song.pos) * 1000;
+          bar.stop();
+          bar.animate({width: '100%'}, timeout, 'linear');
 
+          // set next update
+          if (timeout > max_timeout) timeout = max_timeout;
           setTimeout('update_meta_info()', timeout);
         });
       }
 
-      function update_progress() {
-        current.pos = (new Date() - start) / 1000;
-        $('#time span').width((current.pos / current.length * 100) + '%');
-      }
-
       $(document).ready(function() {
         update_meta_info();
-        setInterval('update_progress()', 100);
       });
     </script>
   </head>
