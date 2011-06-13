@@ -148,7 +148,7 @@ sub _song {
 
   $song->{track} =~ s/\D.*//g;
   $song->{album} = $album || $self->_album($song->album); 
-  $song->{uri} = join('/', $song->{album}{uri}, $song->{track});
+  $song->{uri} = join('#', $song->{album}{uri}, $song->{track});
 
   return $song;
 }

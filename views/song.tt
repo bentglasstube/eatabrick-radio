@@ -1,10 +1,21 @@
-<img id="cover" src="/songs/<% song.album.uri %>.png" alt="Cover art" />
-<h2><% song.track %>. <% song.title %></h2>
-<h3><% song.artist %> - <% song.album.title %></h3>
+<div <% if id %> id="<% id %>" <% end %> class="song <% if station.current.file == song.file %>current<% end %>" >
+  <% if numbers %><p class="track"><% song.track %></p><% end %>
+  <% if link %><a href="/songs/<% song.uri %>"><% end %>
+  <% if image %><img src="/songs/<% song.album.uri %>.png" alt="cover" /><% end %>
+  <% if link %></a><% end %> 
 
-<form method="post" action="/songs/<% song.uri %>">
-  <fieldset>
-    <input type="submit" name="enqueue" value="Enqueue" />
-  </fieldset>
-</form>
+  <% if enqueue %>
+    <form method="post" action="/queue">
+      <input type="hidden" name="album" value="<% song.album.uri %>" />
+      <input type="hidden" name="n" value="<% song.track %>" />
+      <input type="image" src="/add.png" title="Enqueue" />
+    </form>
+  <% end %>
+
+  <div>
+    <p><% song.title %></p>
+    <p><% song.artist %></p>
+    <p><% song.album.title %></p>
+  </div>
+</div>
 

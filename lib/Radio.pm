@@ -5,6 +5,7 @@ use warnings;
 
 use Dancer ':syntax';
 use Dancer::Plugin::MPD;
+use Dancer::Plugin::Ajax;
 
 use IO::File;
 use POSIX qw(ceil);
@@ -170,30 +171,6 @@ post '/songs/:album' => sub {
 
 };
 
-get '/songs/:album/:n' => sub {
-  if (my $song = $station->song(params->{album}, params->{n})) {
-    template 'song', { 
-      song => $song,
-    };
-  } else {
-    status 'not_found';
-    template '404';
-  }
-};
-
-post '/songs/:album/:n' => sub {
-  if (my $song = $station->song(params->{album}, params->{n})) {
-    if (params->{enqueue}) {
-      $station->enqueue($song);
-      flash 'Song added to the queue';
-    }
-    redirect "/songs/$song->{uri}";
-  } else {
-    status 'not_found';
-    template '404';
-  }
-};
-
 get '/queue' => sub {
   my %override = ();
   $override{layout} = undef if request->is_ajax;
@@ -202,20 +179,33 @@ get '/queue' => sub {
 };
 
 post '/queue' => sub {
-  require_login or return;
-
   if (params->{rescan}) {
+    require_login or return;
+
     $station->updatedb();
     flash 'Rescanning music directory';
   } elsif (params->{skip}) {
+    require_login or return;
+
     $station->next();
     flash 'Song skipped';
   } elsif (params->{start}) {
+    require_login or return;
+
     $station->play();
     flash 'Playback started';
   } elsif (params->{stop}) {
+    require_login or return;
+
     $station->stop();
     flash 'Playback stopped';
+  } elsif (params->{album}) {
+    if (my $song = $station->song(params->{album}, params->{n})) {
+      $station->enqueue($song);
+      flash 'Song added to the queue';
+    } else {
+      flash 'Song not found';
+    }
   }
 
   redirect '/queue';
@@ -247,8 +237,23 @@ get '/logout' => sub {
   redirect '/';
 };
 
-get '/current' => sub {
-  template 'current', {}, { layout => undef };
+ajax '/current' => sub {
+  content_type 'application/json';
+
+  if (my $song = $station->current) {
+    my $time = $station->status->time;
+    to_json {
+      uri => $song->{uri},
+      image => "/songs/$song->{album}{uri}.png",
+      title => $song->{title},
+      artist => $song->{artist},
+      album => $song->{album}{title},
+      length => $time->seconds_total,
+      pos => $time->seconds_sofar,
+    };
+  } else {
+    to_json {};
+  }
 };
 
 # default route (404)

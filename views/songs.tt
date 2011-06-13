@@ -1,11 +1,6 @@
 <% if songs.size > 0 %>
   <% for song in songs %>
-    <div class="queue <% if station.current.file == song.file %>current<% end %>">
-      <img src="/songs/<% song.album.uri %>.png" alt="cover" />
-      <p><a href="/songs/<% song.uri %>"><% song.title %></a></p>
-      <p><% song.artist %></p>
-      <p><a href="/songs/<% song.album.uri %>"><% song.album.title %></a></p>
-    </div>
+    <% include song.tt image = 1, link = 1, enqueue = 1 %>
   <% end %>
 <% else %>
   <p class="empty">There are no matching songs.</p>

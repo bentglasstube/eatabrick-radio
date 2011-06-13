@@ -2,10 +2,10 @@
   <a href="/songs/<% station.current.uri %>">
     <img src="/songs/<% station.current.album.uri %>.png" alt="cover" />
   </a>
-  <p><% station.current.title %></p>
-  <p><% station.current.artist %></p>
-  <p><% station.current.album.title %></p>
-  <p class="time">
+  <p id="title"><% station.current.title %></p>
+  <p id="artist"><% station.current.artist %></p>
+  <p id="album"><% station.current.album.title %></p>
+  <p id="time">
     <span style="width: <% station.status.time.percent %>%">&nbsp;</span>
   </p>
 <% end %>

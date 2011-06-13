@@ -1,26 +1,13 @@
-<img id="cover" src="<% album.uri %>.png" alt="cover" />
-<h2><% album.title %></h2>
-<h3><% album.artist %></h3>
-
 <% if session.user %>
   <form method="post" action="<% album.uri %>">
     <fieldset>
       <input type="hidden" name="album" value="<% album.uri %>" />
-      <input type="submit" name="enqueue" value="Enqueue" />
+      <input type="submit" name="enqueue" value="Enqueue Album" />
     </fieldset>
   </form>
 <% end %>
 
-<ol>
-  <% various = album.artist == 'Various Artists' %>
-  <% foreach song in album.tracks %>
-    <% next if loop.count == 1 %>
-    <li>
-      <% if song %>
-        <% if various %><% song.artist %> -<% end %>
-        <a href="<% song.uri %>"><% song.title %></a>
-      <% end %>
-    </li>
-  <% end %>
-</ol>
-
+<% foreach song in album.tracks %>
+  <% next unless song %>
+  <% include song.tt id = song.track, numbers = 1, image = 1, enqueue = 1 %>
+<% end %>

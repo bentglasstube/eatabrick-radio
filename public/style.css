@@ -104,7 +104,7 @@ body {
 #body {
   padding: 0 1em 1em;
   background: #fff;
-  overflow: hidden;
+  overflow: auto;
 }
 
 h1 {
@@ -127,10 +127,6 @@ fieldset {
   margin-bottom: 1em;
 }
 
-td fieldset {
-  margin-bottom: 0;
-}
-
 fieldset p {
   margin-bottom: 0.5em;
 }
@@ -138,30 +134,6 @@ fieldset p {
 input[type=submit] {
   font-weight: bold;
   padding: 0.1em 0.5em;
-}
-
-td input[type=submit] {
-  font-weight: normal;
-  border: none;
-  cursor: pointer;
-  background: none;
-  color: #14f;
-  font-size: 1em;
-}
-
-table {
-  border: 1px solid #000;
-  border-collapse: collapse;
-}
-
-td {
-  padding: 0.1em 0.5em;
-  border: 1px solid #000;
-}
-
-thead td {
-  font-weight: bold;
-  background: #df0;
 }
 
 p {
@@ -239,13 +211,13 @@ input[readonly] {
   margin-bottom: 0.1em;
 }
 
-#playing p.time {
+#playing #time {
   border: 1px solid #000;
   padding: 0;
   height: 8px;
 }
 
-#playing p.time span {
+#playing #time span {
   background: #000;
   height: 100%;
   display: block;
@@ -318,14 +290,14 @@ ol {
   padding-left: 2em;
 }
 
-.queue {
+.song {
   clear: both;
   margin-bottom: 1em;
   overflow: hidden;
   height: 52px;
 }
 
-.queue img {
+.song img {
   float: left;
   width: 50px;
   height: 50px;
@@ -333,9 +305,32 @@ ol {
   border: 1px solid #000;
 }
 
-.queue p {
+.song p {
   white-space: nowrap;
   font-size: 0.7em;
+  color: #000;
+}
+
+.song .track {
+  float: left;
+  font-weight: bold;
+  text-align: right;
+  width: 2em;
+  height: 100%;
+  margin-right: 0.5em;
+}
+
+.song div {
+  float: left;
+  height: 100%;
+  margin-right: 0.5em;
+}
+
+.song form {
+  float: left;
+  height: 100%;
+  margin-right: 0.5em;
+  vertical-align: middle;
 }
 
 .current p {
