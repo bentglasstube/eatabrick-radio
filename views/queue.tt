@@ -22,9 +22,58 @@
   <p class="empty">No songs in queue</p>
 <% end %>
 
-<% if session.user %>
-  <script type="text/javascript">
-    $(function() {
+<script type="text/javascript">
+  var updater;
+
+  function update_queue() {
+    $.get('/queue', function(data) {
+      var dom = $('#queue li');
+      var qpos = 0;
+      dom.each(function() {
+        if ($(this).attr('id') == data.songs[qpos].id) {
+          qpos++;
+        } else {
+          $(this).addClass('remove');
+        }
+      });
+
+      var qlen = data.songs.length;
+      for (i = qpos; i < qlen; ++i) {
+        var song = data.songs[i];
+        $('#queue').append(
+          '<li id="' + song.id + '" class="song add">' +
+            '<a href="/songs/' + song.uri + '">' +
+              '<img src="/songs/' + song.image + '" alt="cover" />' +
+            '</a>' +
+            '<div>' +
+              '<p>' + song.title + '</p>' +
+              '<p>' + song.artist + '</p>' +
+              '<p>' + song.album + '</p>' +
+            '</div>' +
+          '</li>'
+        );
+      }
+
+      $('#queue li').each(function() {
+        if ($(this).hasClass('remove')) {
+          $(this).slideUp(function() { $(this).remove() });
+        } else if ($(this).hasClass('add')) {
+          $(this).slideDown(function() { $(this).removeClass('add') });
+        }
+        
+        if ($(this).attr('id') == data.current) {
+          $(this).addClass('current');
+        } else {
+          $(this).removeClass('current');
+        }
+      });
+
+      updater = setTimeout('update_queue()', data.next > 5000 ? 5000 : data.next); 
+    });    
+  }
+
+  $(function() {
+    <% if session.user %>
       $('#queue').sortable({
         update: function(event, ui) {
           var id = ui.item.attr('id');
@@ -34,10 +83,14 @@
             move: 1, 
             id: id, 
             pos: pos 
-          }, function() { location.reload(1) });
-        }
+          }, function() { alert('sent change request') } );
+        },
+        start: function() { clearTimeout(updater); },
+        stop: function() { updater = setTimeout('update_queue()', 500); },
       });
       $('#queue').disableSelection();
-    });
-  </script>
-<% end %>
+    <% end %>
+    
+    update_queue();
+  });
+</script>

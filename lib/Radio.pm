@@ -174,7 +174,23 @@ post '/songs/:album' => sub {
 };
 
 get '/queue' => sub {
-  template 'queue', { queue => $station->queue };
+  if (request->is_ajax) {
+    content_type 'application/json';
+    to_json { 
+      songs => [ map { { 
+        id => $_->{id},
+        uri => $_->{uri},
+        title => $_->{title},
+        artist => $_->{artist},
+        album => $_->{album}{title},
+        image => $_->{album}{uri} . '.png',
+      }} @{$station->queue} ],
+      current => $station->current->id,
+      next => $station->status->time->seconds_left * 1000,
+    };
+  } else {
+    template 'queue', { queue => $station->queue };
+  }
 };
 
 post '/queue' => sub {
@@ -207,7 +223,6 @@ post '/queue' => sub {
   } elsif (params->{move}) {
     require_login or return;
     $station->playlist->moveid(params->{id}, params->{pos});
-    flash 'Queue updated';
   }
 
   redirect '/queue';

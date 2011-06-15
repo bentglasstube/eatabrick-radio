@@ -334,3 +334,7 @@ li.error {
   cursor: move;
 }
 
+#queue .add {
+  display: none;
+}
+
