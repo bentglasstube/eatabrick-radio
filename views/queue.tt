@@ -83,7 +83,7 @@
             move: 1, 
             id: id, 
             pos: pos 
-          }, function() { alert('sent change request') } );
+          });
         },
         start: function() { clearTimeout(updater); },
         stop: function() { updater = setTimeout('update_queue()', 500); },
