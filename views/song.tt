@@ -1,4 +1,4 @@
-<div <% if id %> id="<% id %>" <% end %> class="song <% if station.current.file == song.file %>current<% end %>" >
+<li <% if id %> id="<% id %>" <% end %> class="song <% if station.current.file == song.file %>current<% end %>" >
   <% if numbers %><p class="track"><% song.track %></p><% end %>
   <% if link %><a href="/songs/<% song.uri %>"><% end %>
   <% if image %><img src="/songs/<% song.album.uri %>.png" alt="cover" /><% end %>
@@ -17,5 +17,5 @@
     <p><% song.artist %></p>
     <p><% song.album.title %></p>
   </div>
-</div>
+</li>
 

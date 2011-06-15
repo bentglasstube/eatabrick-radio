@@ -13,10 +13,31 @@
 <% end %>
 
 <% if queue.size > 0 %>
-  <% for song in queue %>
-    <% include song.tt link = 1, image = 1 %>
-  <% end %>
+  <ul id="queue">
+    <% for song in queue %>
+      <% include song.tt link = 1, image = 1, id = song.id %>
+    <% end %>
+  </ul>
 <% else %>
   <p class="empty">No songs in queue</p>
 <% end %>
 
+<% if session.user %>
+  <script type="text/javascript">
+    $(function() {
+      $('#queue').sortable({
+        update: function(event, ui) {
+          var id = ui.item.attr('id');
+          var pos = $(this).sortable('toArray').indexOf(id);
+  
+          $.post('/queue', { 
+            move: 1, 
+            id: id, 
+            pos: pos 
+          }, function() { location.reload(1) });
+        }
+      });
+      $('#queue').disableSelection();
+    });
+  </script>
+<% end %>

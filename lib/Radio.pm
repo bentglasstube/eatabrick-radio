@@ -204,6 +204,10 @@ post '/queue' => sub {
     } else {
       flash 'Song not found';
     }
+  } elsif (params->{move}) {
+    require_login or return;
+    $station->playlist->moveid(params->{id}, params->{pos});
+    flash 'Queue updated';
   }
 
   redirect '/queue';

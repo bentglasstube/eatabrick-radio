@@ -7,7 +7,10 @@
   </form>
 <% end %>
 
-<% foreach song in album.tracks %>
-  <% next unless song %>
-  <% include song.tt id = song.track, numbers = 1, image = 1, enqueue = 1 %>
-<% end %>
+<ul>
+  <% foreach song in album.tracks %>
+    <% next unless song %>
+    <% include song.tt id = song.track, numbers = 1, image = 1, enqueue = 1 %>
+  <% end %>
+</ul>
+

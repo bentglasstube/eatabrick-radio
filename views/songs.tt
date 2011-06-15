@@ -1,7 +1,9 @@
 <% if songs.size > 0 %>
-  <% for song in songs %>
-    <% include song.tt image = 1, link = 1, enqueue = 1 %>
-  <% end %>
+  <ul>
+    <% for song in songs %>
+      <% include song.tt image = 1, link = 1, enqueue = 1 %>
+    <% end %>
+  </ul>
 <% else %>
   <p class="empty">There are no matching songs.</p>
 <% end %>

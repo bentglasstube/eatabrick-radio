@@ -255,16 +255,8 @@ form dd {
   padding: 0 0.5em;
 }
 
-ul {
-  padding-left: 2em;
-}
-
 li.error {
   color: #933;
-}
-
-ul.fakeol {
-  list-style: none;
 }
 
 .album {
@@ -286,16 +278,12 @@ ul.fakeol {
   overflow: hidden;
 }
 
-ol {
-  clear: both;
-  padding-left: 2em;
-}
-
 .song {
   clear: both;
   margin-bottom: 1em;
   overflow: hidden;
   height: 52px;
+  list-style: none;
 }
 
 .song img {
@@ -341,3 +329,8 @@ ol {
 .error {
   text-align: center;
 }
+
+.ui-sortable li {
+  cursor: move;
+}
+
