@@ -12,6 +12,9 @@ our $station = Radio::Station->promote(mpd);
 sub manage {
   while (1) {
     my $status = $station->status or last;
+
+    $station->play unless $status->state eq 'play';
+
     my $keep = setting('queue_keep') || 1;
     $station->playlist->delete(0) while $station->current->pos > $keep;
 
