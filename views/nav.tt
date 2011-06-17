@@ -17,7 +17,9 @@
   <% link('/songs', 'Songs') %>
   <% link('/queue', 'Queue') %>
   <% if session.user %>
-    <%# link('/upload', 'Upload') %>
+    <% link('/upload', 'Upload') %>
+    <% link('/config', 'Config') %>
+    <% link('/log', 'Logs') %>
     <% link('/logout', 'Log out') %>
   <% else %>
     <% link('/login', 'Log In') %>

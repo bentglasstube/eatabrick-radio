@@ -273,6 +273,35 @@ ajax '/current' => sub {
   }
 };
 
+get '/log' => sub {
+  require_login or return;
+
+  template 'log', { log => Dancer::Logger::Store->fetch };
+};
+
+post '/log' => sub {
+  require_login or return;
+
+  if (params->{clear}) {
+    Dancer::Logger::Store->clear;
+    flash 'Log cleared';
+  }
+
+  redirect '/log';
+};
+
+get '/config' => sub {
+  require_login or return;
+
+  template 'config';
+};
+
+get '/upload' => sub {
+  require_login or return;
+
+  template 'upload';
+};
+
 # default route (404)
 any qr{.*} => sub { 
   status 'not_found'; 

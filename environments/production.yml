@@ -1,6 +1,6 @@
-logger: file
+logger: store
+logger_format: '<li class="%L">[%t] %m at %f:%l</li>'
 log: warning
 session: simple
 show_errors: 0
 warnings: 1
-

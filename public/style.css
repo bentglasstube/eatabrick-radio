@@ -255,10 +255,6 @@ form dd {
   padding: 0 0.5em;
 }
 
-li.error {
-  color: #933;
-}
-
 .album {
   float: left;
   margin: 0 0.5em 0.5em;
@@ -326,15 +322,27 @@ li.error {
   font-weight: bold;
 }
 
-.error {
-  text-align: center;
-}
-
 .ui-sortable li {
   cursor: move;
 }
 
 #queue .add {
   display: none;
+}
+
+#log li {
+  list-style: none;
+}
+
+#log .debug {
+  color: #448;
+}
+
+#log .warning {
+  color: #884;
+}
+
+#log .error {
+  color: #844;
 }
 

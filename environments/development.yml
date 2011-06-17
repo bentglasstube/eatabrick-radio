@@ -1,6 +1,8 @@
-logger: console
+logger: store
+logger_format: '<li class="%L">[%t] %m at %f:%l</li>'
 log: debug
 session: simple
 show_errors: 1
 warnings: 0
+
 

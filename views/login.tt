@@ -3,9 +3,9 @@
   <fieldset>
     <dl>
       <dt><label for="name">Name:</label></dt>
-      <dd><input name="name" id="name" value="<% params.name %>" /></dd>
+      <dd><input name="name" id="name" value="<% params.name %>" tabindex="1" /></dd>
       <dt><label for="pass">Password:</label></dt>
-      <dd><input type="password" name="pass" id="pass" /></dd>
+      <dd><input type="password" name="pass" id="pass" tabindex="2" /></dd>
     </dl>
     <input type="submit" value="Log In" />
   </fieldset>

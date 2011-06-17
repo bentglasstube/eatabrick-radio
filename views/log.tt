@@ -1,0 +1,15 @@
+<form method="post" action="/log">
+  <fieldset>
+    <input type="submit" name="clear" value="Clear Log" />
+  </fieldset>
+</form>
+
+<% if log.size > 0 %>
+  <ul id="log">
+    <% for message in log %>
+      <% message %>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="empty">Nothing new in the logs</p>
+<% end %>
