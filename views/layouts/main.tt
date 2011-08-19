@@ -2,7 +2,8 @@
 <html>
   <head>
     <title>Eat a Brick Radio</title>
-    <link rel="stylesheet" href="/style.css" />
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/style.css">
     <script type="text/javascript" src="/jquery.min.js"></script>
     <script type="text/javascript" src="/jquery-ui.min.js"></script>
     <script type="text/javascript">
@@ -54,7 +55,7 @@
   <body>
     <div id="header">
       <div id="playing"><% include 'current.tt' %></div>
-      <img src="/bricky.png" alt="bricky" />
+      <img src="/bricky.png" alt="bricky">
       <h1>Eat a Brick Radio</h1>
       <% include 'nav.tt' %>
     </div>
