@@ -308,15 +308,4 @@ any qr{.*} => sub {
   template '404';
 };
 
-# fork for queue management thrad
-my $pid = fork();
-if (!defined $pid) {
-  die "Failed to fork queue manager";
-} elsif ($pid == 0) {
-  require Radio::QueueManager;
-  Radio::QueueManager::manage();
-} else {
-  debug "Forked queue manager $pid";
-}
-
 true;
