@@ -1,16 +1,19 @@
-package AppName;
+package EaBRadio;
 use Dancer ':syntax';
 
 use utf8;
 use strict;
 use warnings;
 
-use Dancer::Plugin::DBIC;
-
 our $VERSION = '0.1';
 
 get '/' => sub {
   template 'index';
+};
+
+get '/listen.*' => sub {
+  my ($ext) = splat;
+  redirect "http://radio.eatabrick.org:8000/radio.$ext";
 };
 
 1;

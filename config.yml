@@ -1,4 +1,4 @@
-appname: "Dancer Base"
+appname: "eatabrick radio"
 layout: "main"
 charset: "UTF-8"
 template: "template_toolkit"
