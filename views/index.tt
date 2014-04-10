@@ -1,1 +1,16 @@
 <img src="/estd.png">
+
+[% macro item(text, done) block %]
+  <li><i class="fa fa[% done ? '-check' : '' %]-square-o"></i> [% text %]</li>
+[% end %]
+
+<h1>To-do</h1>
+<ul class="list-unstyled">
+  [% item('Volume control') %]
+  [% item('Skip control') %]
+  [% item('Current song information') %]
+  [% item('Play history') %]
+  [% item('Request song') %]
+  [% item('Song listing') %]
+</ul>
+
