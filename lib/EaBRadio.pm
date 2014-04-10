@@ -13,7 +13,7 @@ get '/' => sub {
 
 get '/listen.*' => sub {
   my ($ext) = splat;
-  redirect "http://radio.eatabrick.org:8000/radio.$ext";
+  redirect "http://alan.radio.eatabrick.org:8000/radio.$ext";
 };
 
 1;
