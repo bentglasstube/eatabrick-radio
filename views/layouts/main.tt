@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <title>[% settings.appname %]</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/style.css" rel="stylesheet">
+
+    <link href="/favicon.png" rel="shortcut icon">
+  </head>
+  <body>
+    <div class="navbar navbar-default">
+      <div class="container">
+        <a class="navbar-brand" href="/">[% settings.appname %]</a>
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="#">Home</a></li>
+          <li><a href="#">Lorem</a></li>
+          <li><a href="#">Ipsum</a></li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="#">Dolor</a></li>
+              <li><a href="#">Sit</a></li>
+              <li><a href="#">Amet</a></li>
+              <li class="divider"></li>
+              <li><a href="#">Consecteur</a></li>
+              <li><a href="#">Adipisicing</a></li>
+              <li><a href="#">Elit</a></li>
+            </ul>
+        </ul>
+        <form class="navbar-form navbar-right">
+          <input class="form-control" type="text" placeholder="Email">
+          <input class="form-control" type="password" placeholder="Password">
+          <button type="submit" class="btn btn-default">Sign In</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="container">
+      [% content %]
+    </div>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src="/site.js"></script>
+  </body>
+</html>
