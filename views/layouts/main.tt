@@ -48,6 +48,12 @@
         <p class="alert alert-warning"><strong>Sorry.</strong> Your browser does not support HTML5 audio elements</p>
       </audio>
 
+      <noscript>
+        <p class="alert alert-danger"><strong>Hey!</strong> You either have
+        javascript turned off or your browser doesn't support javascript.  This
+        site requires javascript to work best.</p>
+      </noscript>
+
       [% content %]
     </div>
 
