@@ -45,7 +45,7 @@
       <audio id="radio">
         <source src="/listen.ogg" type="audio/ogg; codecs='vorbis'">
         <source src="/listen.mp3" type="audio/mpeg; codecs='mp3'">
-        <p class="alert alert-warning"><strong>Sorry.</strong> Your browser does not support HTML5 audio elements</p>
+        <p class="alert alert-danger"><strong>Sorry.</strong> Your browser does not support HTML5 audio elements</p>
       </audio>
 
       <noscript>
