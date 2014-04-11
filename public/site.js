@@ -27,4 +27,12 @@ $(function() {
 
     alert('Sorry, this is not yet implemented');
   });
+
+  $('#volume').click(function(e) {
+    var volume = e.offsetX / $(this).width();
+
+    $('#radio')[0].volume = volume;
+    $('#volume p').css('width', volume * 100 + '%');
+  });
 });
+ 

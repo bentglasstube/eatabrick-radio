@@ -35,6 +35,12 @@
         </ul>
         -->
         <ul class="nav navbar-nav navbar-right">
+          <li>
+            <a>
+              <i id="volicon" class="fa fa-volume-up"></i>
+              <div id="volume"><p></p></div>
+            </a>
+          </li>
           <li><a href="#play" id="play"><i class="fa fa-play"></i></a></li>
           <li><a href="#skip" id="skip"><i class="fa fa-forward"></i></a></li>
         </ul>

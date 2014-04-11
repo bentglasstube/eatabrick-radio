@@ -6,7 +6,7 @@
 
 <h1>To-do</h1>
 <ul class="list-unstyled">
-  [% item('Volume control') %]
+  [% item('Volume control', 1) %]
   [% item('Skip control') %]
   [% item('Current song information') %]
   [% item('Play history') %]

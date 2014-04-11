@@ -1,1 +1,13 @@
-/* site specific styles */
+#volume {
+  height: 10px;
+  width: 50px;
+  display: inline-block;
+  background: #777;
+}
+
+#volume p {
+  background: #000;
+  height: 10px;
+  width: 100%;
+}
+
