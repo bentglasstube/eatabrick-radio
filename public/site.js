@@ -63,6 +63,18 @@ $(function() {
         $('#album').html(album);
         $('#title').html(title);
         $('#thumb').attr('src', '/art?' + new Date().getTime())
+
+        $.get('/playlist', function(data) {
+          var list = '';
+          for (var i = data.length - 1; i >= 0; --i) {
+            list += '<li';
+            if (i == data.length - 2) list += ' class="active"';
+            list += '>' + (data[i].Album || 'Unknown Album');
+            list += '<br>' + (data[i].Title || 'Untitled') + '</li>';
+          }
+
+          $('#playlist').html(list);
+        });
       }
     });
   }, 1000);

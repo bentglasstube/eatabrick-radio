@@ -39,3 +39,20 @@
   border: 1px solid #777;
   background: #777;
 }
+
+#playlist li {
+  border-top: 1px solid #bbb;
+  padding: 5px 0;
+}
+
+#playlist li:first-child {
+  border-top: none;
+}
+
+#playlist li.active {
+  font-weight: bold;
+}
+
+.centered {
+  text-align: center;
+}

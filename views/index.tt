@@ -1,21 +1,31 @@
-<img src="/estd.png">
+<div class="centered">
+  <img src="/estd.png">
+</div>
 
 [% macro item(text, done) block %]
   <li><i class="fa fa[% done ? '-check' : '' %]-square-o"></i> [% text %]</li>
 [% end %]
 
-<h1>To-do</h1>
-<ul class="list-unstyled">
-  [% item('Volume control', 1) %]
-  [% item('Skip control', 1) %]
-  [% item('Current song information', 1) %]
-  [% item('Album art', 1) %]
-  [% item('Improve volume control', 1) %]
-  [% item('Play history') %]
-  [% item('Song listing') %]
-  [% item('Request song') %]
-  [% item('Skip control rate limiting') %]
-  [% item('Admin controls') %]
-  [% item('News') %]
-</ul>
+<div class="row">
+  <div class="col-md-4">
+    <h1>To-do</h1>
+    <ul class="list-unstyled">
+      [% item('Volume control', 1) %]
+      [% item('Skip control', 1) %]
+      [% item('Current song information', 1) %]
+      [% item('Album art', 1) %]
+      [% item('Improve volume control', 1) %]
+      [% item('Play history', 1) %]
+      [% item('Song listing') %]
+      [% item('Request song') %]
+      [% item('Skip control rate limiting') %]
+      [% item('Admin controls') %]
+      [% item('News') %]
+    </ul>
+  </div>
 
+  <div class="col-md-8">
+    <h1>Playlist</h1>
+    <ol class="list-unstyled" id="playlist"></ol>
+  </div>
+</div>

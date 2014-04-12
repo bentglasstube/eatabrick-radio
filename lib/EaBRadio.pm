@@ -30,6 +30,11 @@ get '/metadata' => sub {
   to_json(mpd->current_song);
 };
 
+get '/playlist' => sub {
+  content_type 'application/json';
+  to_json([ mpd->playlist_info ]);
+};
+
 get '/art' => sub {
   my $info = mpd->current_song;
 
