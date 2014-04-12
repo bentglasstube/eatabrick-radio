@@ -2,6 +2,7 @@ package EaBRadio;
 use Dancer ':syntax';
 
 use Net::MPD;
+use LWP::UserAgent;
 
 use utf8;
 use strict;
@@ -27,6 +28,23 @@ get '/listen.*' => sub {
 get '/metadata' => sub {
   content_type 'application/json';
   to_json(mpd->current_song);
+};
+
+get '/art' => sub {
+  my $info = mpd->current_song;
+
+  my $xml = LWP::UserAgent->new->post('http://ws.audioscrobbler.com/2.0', {
+      method => 'album.getinfo',
+      api_key => '4827e70daf0106ae5a88b268c083e65b',
+      artist => $info->{Artist},
+      album => $info->{Album},
+    })->decoded_content;
+
+  # TODO real xml parser
+  my ($url) = $xml =~ m{<image size="small">(.*?)</image>};
+  $url ||= '/unknown.png';
+
+  redirect $url;
 };
 
 post '/skip' => sub {

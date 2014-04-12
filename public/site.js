@@ -46,13 +46,11 @@ $(function() {
         var album = data.Album || '<em>Unknown Album</em>';
         var title = data.Title || '<em>Untitled</em>';
 
+        $('#metadata').attr('title', album + ' - ' + title);
         $('#album').html(album);
         $('#title').html(title);
-        $('#metadata').attr('title', album + ' - ' + title);
+        $('#thumb').attr('src', '/art')
       }
     });
   }, 1000);
-
-
 });
- 
