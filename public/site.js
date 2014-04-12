@@ -49,7 +49,7 @@ $(function() {
         $('#metadata').attr('title', album + ' - ' + title);
         $('#album').html(album);
         $('#title').html(title);
-        $('#thumb').attr('src', '/art')
+        $('#thumb').attr('src', '/art?' + new Date().getTime())
       }
     });
   }, 1000);

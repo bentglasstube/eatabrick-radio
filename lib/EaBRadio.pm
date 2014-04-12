@@ -44,6 +44,7 @@ get '/art' => sub {
   my ($url) = $xml =~ m{<image size="small">(.*?)</image>};
   $url ||= '/unknown.png';
 
+  header 'Cache-Control', 'no-cache, must-revalidate';
   redirect $url;
 };
 
