@@ -25,7 +25,9 @@ $(function() {
   $('#skip').click(function(e) {
     e.preventDefault();
 
-    alert('Sorry, this is not yet implemented');
+    $.post('/skip', null, function(data) {
+      if (data.status == 'error') alert(data.message);
+    });
   });
 
   $('#volume').click(function(e) {

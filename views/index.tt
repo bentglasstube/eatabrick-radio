@@ -7,10 +7,14 @@
 <h1>To-do</h1>
 <ul class="list-unstyled">
   [% item('Volume control', 1) %]
-  [% item('Skip control') %]
+  [% item('Skip control', 1) %]
   [% item('Current song information') %]
   [% item('Play history') %]
   [% item('Request song') %]
   [% item('Song listing') %]
+  [% item('Improve volume control') %]
+  [% item('Skip control rate limiting') %]
+  [% item('Admin controls') %]
+  [% item('News') %]
 </ul>
 
