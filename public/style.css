@@ -3,12 +3,16 @@
   width: 50px;
   display: inline-block;
   background: #777;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
 }
 
 #volume p {
   background: #000;
   height: 10px;
   width: 100%;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
 }
 
 #metadata {

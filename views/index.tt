@@ -10,7 +10,7 @@
   [% item('Skip control', 1) %]
   [% item('Current song information', 1) %]
   [% item('Album art', 1) %]
-  [% item('Improve volume control') %]
+  [% item('Improve volume control', 1) %]
   [% item('Play history') %]
   [% item('Song listing') %]
   [% item('Request song') %]
