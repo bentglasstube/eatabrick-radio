@@ -24,6 +24,11 @@ get '/listen.*' => sub {
   redirect "http://$HOST:8000/radio.$ext";
 };
 
+get '/metadata' => sub {
+  content_type 'application/json';
+  to_json(mpd->current_song);
+};
+
 post '/skip' => sub {
   mpd->next;
 

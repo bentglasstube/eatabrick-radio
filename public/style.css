@@ -11,3 +11,17 @@
   width: 100%;
 }
 
+#metadata {
+  padding: 10px;
+  border-right: 1px solid #bbb;
+  height: 100%;
+  width: 150px;
+}
+
+#metadata p {
+  margin: 0;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

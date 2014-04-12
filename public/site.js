@@ -36,5 +36,23 @@ $(function() {
     $('#radio')[0].volume = volume;
     $('#volume p').css('width', volume * 100 + '%');
   });
+
+  var song_id;
+  setInterval(function() {
+    $.get('/metadata', function(data) {
+      if (song_id != data.Id) {
+        song_id = data.Id;
+
+        var album = data.Album || '<em>Unknown Album</em>';
+        var title = data.Title || '<em>Untitled</em>';
+
+        $('#album').html(album);
+        $('#title').html(title);
+        $('#metadata').attr('title', album + ' - ' + title);
+      }
+    });
+  }, 1000);
+
+
 });
  
