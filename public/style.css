@@ -31,7 +31,7 @@
   text-overflow: ellipsis;
 }
 
-#thumb {
+.thumb {
   float: left;
   height: 34px;
   width: 34px;
@@ -51,6 +51,10 @@
 
 #playlist li.active {
   font-weight: bold;
+}
+
+#playlist li .thumb {
+  margin-top: 3px;
 }
 
 .centered {

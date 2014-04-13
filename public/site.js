@@ -67,10 +67,18 @@ $(function() {
         $.get('/playlist', function(data) {
           var list = '';
           for (var i = data.length - 1; i >= 0; --i) {
+            var album = data[i].Album || '<em>Unknown Album</em>';
+            var artist = data[i].Artist || '<em>Unknown Artist</em>';
+            var title = data[i].Title || '<em>Untitled</em>';
+
             list += '<li';
             if (i == data.length - 2) list += ' class="active"';
-            list += '>' + (data[i].Album || 'Unknown Album');
-            list += '<br>' + (data[i].Title || 'Untitled') + '</li>';
+            list += '>';
+
+            list += '<img class="thumb" src="/art?artist=' + artist + '&album=' + album + '" alt="Album Art">';
+
+            list += album + '<br>' + title;
+            list += '</li>';
           }
 
           $('#playlist').html(list);

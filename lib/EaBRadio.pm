@@ -36,13 +36,20 @@ get '/playlist' => sub {
 };
 
 get '/art' => sub {
-  my $info = mpd->current_song;
+  my $album = param('album');
+  my $artist = param('artist');
+
+  unless ($album and $artist) {
+    my $info = mpd->current_song;
+    $album = $info->{Album};
+    $artist = $info->{Artist};
+  }
 
   my $xml = LWP::UserAgent->new->post('http://ws.audioscrobbler.com/2.0', {
       method => 'album.getinfo',
       api_key => '4827e70daf0106ae5a88b268c083e65b',
-      artist => $info->{Artist},
-      album => $info->{Album},
+      artist => $artist,
+      album => $album,
     })->decoded_content;
 
   # TODO real xml parser

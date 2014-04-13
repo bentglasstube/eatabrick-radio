@@ -16,7 +16,7 @@
       [% item('Album art', 1) %]
       [% item('Improve volume control', 1) %]
       [% item('Play history', 1) %]
-      [% item('Album art for all') %]
+      [% item('Album art for all', 1) %]
       [% item('Transition animations') %]
       [% item('Song listing') %]
       [% item('Request song') %]
