@@ -60,3 +60,7 @@
 .centered {
   text-align: center;
 }
+
+em {
+  color: #777;
+}
