@@ -50,6 +50,23 @@ $(function() {
     if (adjusting) set_volume(e.offsetX / $(this).width());
   });
 
+  var make_song_item = function(data) {
+    var album = data.Album || '<em>Unknown Album</em>';
+    var artist = data.Artist || '<em>Unknown Artist</em>';
+    var title = data.Title || '<em>Untitled</em>';
+
+    var image = $('<img>');
+    image.attr('src', '/art?album=' + album + '&artist=' + artist);
+    image.attr('alt', 'Album Art');
+    image.addClass('thumb');
+
+    var item = $('<li></li>');
+    item.append(image);
+    item.append(album + '<br>' + title);
+
+    return item;
+  };
+
   var song_id;
   setInterval(function() {
     $.get('/metadata', function(data) {
@@ -69,25 +86,29 @@ $(function() {
         });
 
         $.get('/playlist', function(data) {
-          var list = '';
-          for (var i = data.length - 1; i >= 0; --i) {
-            var album = data[i].Album || '<em>Unknown Album</em>';
-            var artist = data[i].Artist || '<em>Unknown Artist</em>';
-            var title = data[i].Title || '<em>Untitled</em>';
+          var item = make_song_item(data[data.length - 1]);
+          $('#playlist').prepend(item);
+          item.animate({ opacity: 1 }, 1000);
 
-            list += '<li';
-            if (i == data.length - 2) list += ' class="active"';
-            list += '>';
+          $('#playlist li:last-child').animate({ opacity: 0 }, 1000, function() {
+            $('#playlist li:last-child').remove();
+          });
 
-            list += '<img class="thumb" src="/art?artist=' + artist + '&album=' + album + '" alt="Album Art">';
-
-            list += album + '<br>' + title;
-            list += '</li>';
-          }
-
-          $('#playlist').html(list);
+          $('#playlist li.active').removeClass('active');
+          $('#playlist li:nth-child(2)').addClass('active');
         });
       }
     });
   }, 1000);
+
+  $.get('/playlist', function(data) {
+    var playlist = $('#playlist');
+    for (var i = data.length - 2; i >= 0; --i) {
+      var item = make_song_item(data[i]);
+      if (i == data.length - 2) item.addClass('active');
+      playlist.append(item);
+      item.animate({ opacity: 1 }, 1000);
+    }
+    playlist.append('<li></li>');
+  });
 });

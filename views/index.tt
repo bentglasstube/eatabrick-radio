@@ -17,7 +17,7 @@
       [% item('Improve volume control', 1) %]
       [% item('Play history', 1) %]
       [% item('Album art for all', 1) %]
-      [% item('Transition animations') %]
+      [% item('Transition animations', 1) %]
       [% item('Song listing') %]
       [% item('Request song') %]
       [% item('Skip control rate limiting') %]
