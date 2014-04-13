@@ -59,10 +59,14 @@ $(function() {
         var album = data.Album || '<em>Unknown Album</em>';
         var title = data.Title || '<em>Untitled</em>';
 
-        $('#metadata').attr('title', album + ' - ' + title);
-        $('#album').html(album);
-        $('#title').html(title);
-        $('#thumb').attr('src', '/art?' + new Date().getTime())
+        $('#metadata').animate({ opacity: 0 }, 1000, function() {
+          $('#metadata').attr('title', album + ' - ' + title);
+          $('#album').html(album);
+          $('#title').html(title);
+          $('#thumb').attr('src', '/art?' + new Date().getTime());
+
+          $('#metadata').animate({ opacity: 1 }, 1000);
+        });
 
         $.get('/playlist', function(data) {
           var list = '';

@@ -20,6 +20,7 @@
   border-right: 1px solid #bbb;
   height: 100%;
   width: 200px;
+  opacity: 0;
 }
 
 #metadata p {
