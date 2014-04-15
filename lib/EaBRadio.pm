@@ -11,7 +11,7 @@ use warnings;
 our $VERSION = '0.1';
 
 # TODO make dynamic
-my $HOST = 'steve.radio.eatabrick.org';
+my $HOST = 'alan.radio.eatabrick.org';
 
 # TODO cache connection
 sub mpd { return Net::MPD->connect($HOST) }
