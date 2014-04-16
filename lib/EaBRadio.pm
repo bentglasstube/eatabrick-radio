@@ -45,6 +45,9 @@ get '/playlist' => sub {
   to_json([ mpd->playlist_info ]);
 };
 
+#cache for album art
+my %_art = ();
+
 get '/art' => sub {
   my $album = param('album');
   my $artist = param('artist');
@@ -55,19 +58,25 @@ get '/art' => sub {
     $artist = $info->{Artist};
   }
 
-  my $xml = LWP::UserAgent->new->post('http://ws.audioscrobbler.com/2.0', {
-      method => 'album.getinfo',
-      api_key => '4827e70daf0106ae5a88b268c083e65b',
-      artist => $artist,
-      album => $album,
-    })->decoded_content;
+  unless (exists $_art{$album, $artist}) {
+    debug "Searching for art for $album, $artist";
 
-  # TODO real xml parser
-  my ($url) = $xml =~ m{<image size="small">(.*?)</image>};
-  $url ||= '/unknown.png';
+    my $xml = LWP::UserAgent->new->post('http://ws.audioscrobbler.com/2.0', {
+        method => 'album.getinfo',
+        api_key => '4827e70daf0106ae5a88b268c083e65b',
+        artist => $artist,
+        album => $album,
+      })->decoded_content;
+
+    # TODO real xml parser
+    my ($url) = $xml =~ m{<image size="small">(.*?)</image>};
+    $url ||= '/unknown.png';
+
+    $_art{$album, $artist} = $url;
+  }
 
   header 'Cache-Control', 'no-cache, must-revalidate';
-  redirect $url;
+  redirect $_art{$album, $artist};
 };
 
 post '/skip' => sub {
