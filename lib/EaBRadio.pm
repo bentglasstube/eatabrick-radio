@@ -13,8 +13,18 @@ our $VERSION = '0.1';
 # TODO make dynamic
 my $HOST = 'alan.radio.eatabrick.org';
 
-# TODO cache connection
-sub mpd { return Net::MPD->connect($HOST) }
+# cache mpd connection
+my $mpd = undef;
+sub mpd {
+  unless ($mpd) {
+    debug "Opening new connection to $HOST";
+    $mpd = Net::MPD->connect($HOST)
+  }
+
+  $mpd->ping;
+  $mpd->update_status;
+  return $mpd;
+}
 
 get '/' => sub {
   template 'index';
