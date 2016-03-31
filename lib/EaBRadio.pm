@@ -11,7 +11,7 @@ use warnings;
 our $VERSION = '0.1';
 
 # TODO make dynamic
-my $HOST = 'steve.radio.eatabrick.org';
+my $HOST = 'master.radio.eatabrick.org';
 
 # cache mpd connection
 my $mpd = undef;
