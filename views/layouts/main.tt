@@ -36,8 +36,8 @@
 
     <div class="container">
       <audio id="radio" preload="none">
-        <source src="/listen.ogg" type="audio/ogg; codecs='vorbis'">
-        <source src="/listen.mp3" type="audio/mpeg; codecs='mp3'">
+        <source src="/listen.mp3" type="audio/mpeg;">
+        <source src="/listen.ogg" type="audio/ogg;">
         <p class="alert alert-danger"><strong>Sorry.</strong> Your browser does not support HTML5 audio elements</p>
       </audio>
 
