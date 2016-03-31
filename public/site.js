@@ -21,6 +21,13 @@ $(function() {
       $('#play i').addClass('fa-stop');
     }
   });
+  
+  $(window).keypress(function(e) {
+    if (e.which == 32) {
+      e.preventDefault();
+      $('#play').click();
+    }
+  });
 
   $('#skip').click(function(e) {
     e.preventDefault();
