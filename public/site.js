@@ -1,6 +1,14 @@
 $(function() {
   var playing = false;
 
+  var set_page_title = function() {
+    if (playing) {
+      document.title = $('#title').text();
+    } else {
+      document.title = 'eatabrick radio';
+    }
+  }
+
   $('#play').click(function(e) {
     e.preventDefault();
 
@@ -16,12 +24,15 @@ $(function() {
       audio.load();
       audio.play();
 
+      // TODO wait to set playing until actually playing
       playing = true;
       $('#play i').removeClass('fa-play');
       $('#play i').addClass('fa-stop');
     }
+
+    set_page_title();
   });
-  
+
   $(window).keypress(function(e) {
     if (e.which == 32) {
       e.preventDefault();
@@ -89,6 +100,7 @@ $(function() {
           $('#title').html(title);
           $('#thumb').attr('src', '/art?' + new Date().getTime());
 
+          set_page_title();
           $('#metadata').animate({ opacity: 1 }, 1000);
         });
 
