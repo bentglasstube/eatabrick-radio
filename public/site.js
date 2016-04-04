@@ -33,10 +33,13 @@ $(function() {
     set_page_title();
   });
 
-  $(window).keypress(function(e) {
+  $(document).keydown(function(e) {
     if (e.which == 32) {
       e.preventDefault();
       $('#play').click();
+    } else if (e.which == 34) {
+      e.preventDefault();
+      $('#skip').click();
     }
   });
 
