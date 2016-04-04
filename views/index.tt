@@ -7,7 +7,7 @@
 [% end %]
 
 <div class="row">
-  <div class="col-md-4">
+  <div class="col-sm-4">
     <h1>To-do</h1>
     <ul class="list-unstyled">
       [% item('Volume control', 1) %]
@@ -27,7 +27,7 @@
     </ul>
   </div>
 
-  <div class="col-md-8">
+  <div class="col-sm-8">
     <h1>Playlist</h1>
     <ol class="list-unstyled" id="playlist"></ol>
   </div>
