@@ -1,7 +1,3 @@
-<div class="centered">
-  <img src="/estd.png">
-</div>
-
 [% macro item(text, done) block %]
   <li><i class="fa fa[% done ? '-check' : '' %]-square-o"></i> [% text %]</li>
 [% end %]
