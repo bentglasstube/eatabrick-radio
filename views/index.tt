@@ -19,11 +19,11 @@
       [% item('Play history', 1) %]
       [% item('Album art for all', 1) %]
       [% item('Transition animations', 1) %]
+      [% item('Better mobile interface', 1) %]
       [% item('Song listing') %]
       [% item('Request song') %]
       [% item('Skip control rate limiting') %]
       [% item('Admin controls') %]
-      [% item('Better mobile interface') %]
       [% item('News') %]
     </ul>
   </div>
