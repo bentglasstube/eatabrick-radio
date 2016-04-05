@@ -7,6 +7,11 @@
 [% end %]
 
 <div class="row">
+  <div class="col-sm-8">
+    <h1>Playlist</h1>
+    <ol class="list-unstyled" id="playlist"></ol>
+  </div>
+
   <div class="col-sm-4">
     <h1>To-do</h1>
     <ul class="list-unstyled">
@@ -25,10 +30,5 @@
       [% item('Better mobile interface') %]
       [% item('News') %]
     </ul>
-  </div>
-
-  <div class="col-sm-8">
-    <h1>Playlist</h1>
-    <ol class="list-unstyled" id="playlist"></ol>
   </div>
 </div>
