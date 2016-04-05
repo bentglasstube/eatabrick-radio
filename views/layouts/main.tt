@@ -13,24 +13,22 @@
     <link href="/favicon.png" rel="shortcut icon">
   </head>
   <body>
-    <div class="navbar navbar-default">
+    <div class="row" id="header">
       <div class="container">
-        <a class="navbar-brand" href="#">[% settings.appname %]</a>
-        <ul class="nav navbar-nav navbar-right">
-          <li id="metadata">
-            <img id="thumb" class="thumb" src="/unknown.png" alt="Album Art">
-            <p id="album">&nbsp;</p>
-            <p id="title">&nbsp;</p>
-          </li>
-          <li>
-            <a>
-              <i id="volicon" class="fa fa-volume-up"></i>
-              <div id="volume"><p></p></div>
-            </a>
-          </li>
-          <li><a href="#play" id="play"><i class="fa fa-play"></i></a></li>
-          <li><a href="#skip" id="skip"><i class="fa fa-forward"></i></a></li>
-        </ul>
+        <div class="col-sm-4" id="brand">[% settings.appname %]</div>
+        <div class="col-sm-4" id="metadata">
+          <img id="thumb" class="thumb" src="/unknown.png" alt="Album Art">
+          <p id="album">&nbsp;</p>
+          <p id="title">&nbsp;</p>
+        </div>
+        <div class="col-sm-4" id="controls">
+          <a>
+            <i id="volicon" class="fa fa-volume-up"></i>
+            <div id="volume"><p></p></div>
+          </a>
+          <a href="#play" id="play"><i class="fa fa-play"></i></a>
+          <a href="#skip" id="skip"><i class="fa fa-forward"></i></a>
+        </div>
       </div>
     </div>
 

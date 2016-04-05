@@ -1,25 +1,20 @@
-#volume {
-  height: 10px;
-  width: 50px;
-  display: inline-block;
-  background: #777;
-  border-radius: 5px;
-  -moz-border-radius: 5px;
+#header {
+  color: #777;
+  background: #eee;
+  border-bottom: 1px solid #333;
+  margin: 0 0;
 }
 
-#volume p {
-  background: #000;
-  height: 10px;
-  width: 100%;
-  border-radius: 5px;
-  -moz-border-radius: 5px;
+#brand {
+  padding: 15px 0;
+  font-size: 18px;
+  line-height:20px;
+  height: 50px;
 }
 
 #metadata {
-  padding: 8px;
-  border-right: 1px solid #bbb;
+  padding: 6px 0;
   height: 100%;
-  width: 200px;
   opacity: 0;
 }
 
@@ -41,6 +36,34 @@
   background: #777;
 }
 
+#volume {
+  height: 10px;
+  width: 50px;
+  display: inline-block;
+  background: #777;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+#volume p {
+  background: #000;
+  height: 10px;
+  width: 100%;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+#controls {
+  line-height: 20px;
+  height: 50px;
+  padding: 14px 0;
+}
+
+#controls a {
+  color: #777;
+  padding: 10px;
+}
+
 #playlist li {
   border-top: 1px solid #bbb;
   padding: 5px 0;
@@ -57,12 +80,4 @@
 
 #playlist li .thumb {
   margin-top: 3px;
-}
-
-.centered {
-  text-align: center;
-}
-
-em {
-  color: #777;
 }
