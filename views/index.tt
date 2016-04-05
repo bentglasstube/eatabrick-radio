@@ -20,10 +20,13 @@
       [% item('Album art for all', 1) %]
       [% item('Transition animations', 1) %]
       [% item('Better mobile interface', 1) %]
+
+      [% item('Move to self-hosting') %]
       [% item('Song listing') %]
       [% item('Request song') %]
       [% item('Skip control rate limiting') %]
       [% item('Admin controls') %]
+      [% item('Websockets instead of polling') %]
       [% item('News') %]
     </ul>
   </div>
