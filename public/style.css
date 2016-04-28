@@ -64,6 +64,10 @@
   padding: 10px;
 }
 
+#controls a:hover {
+  text-decoration: none;
+}
+
 #playlist li {
   border-top: 1px solid #bbb;
   padding: 5px 0;

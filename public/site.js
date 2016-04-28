@@ -27,6 +27,7 @@ $(function() {
     $('#controls a').css('color', fg);
     $('#header').css('color', fg);
     $('#header').css('background', bg);
+    $('#volume p').css('background', fg);
   };
 
   var cycle_colors = function() {
