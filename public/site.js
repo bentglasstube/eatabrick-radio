@@ -66,16 +66,16 @@ $(function() {
   });
 
   $(document).keydown(function(e) {
-    if (e.which == 32) {
+    if (e.which == 32) {  // space
       e.preventDefault();
       $('#play').click();
-    } else if (e.which == 34) {
+    } else if (e.which == 34) { // page down
       e.preventDefault();
       $('#skip').click();
-    } else if (e.which == 67) {
+    } else if (e.which == 67) { // c
       e.preventDefault();
       cycle_colors();
-    } else if (e.which == 82) {
+    } else if (e.which == 78) { // n
       e.preventDefault();
       random_colors();
     }
@@ -134,6 +134,8 @@ $(function() {
 
         var album = data.Album || '<em>Unknown Album</em>';
         var title = data.Title || '<em>Untitled</em>';
+
+        random_colors();
 
         $('#metadata').animate({ opacity: 0 }, 1000, function() {
           $('#metadata').attr('title', album + ' - ' + title);
