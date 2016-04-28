@@ -9,6 +9,47 @@ $(function() {
     }
   }
 
+  var colors = [
+      // fg     bg
+      ['#777', '#eee'],
+      ['#333', '#df0'],
+      ['#333', '#eab'],
+      ['#eee', '#b22'],
+      ['#eee', '#2b2'],
+      ['#eee', '#22b'],
+  ];
+
+  var current_color = 0;
+
+  var set_colors = function(fg, bg) {
+    console.log('Set colors fg:' + fg + ' bg:' + bg);
+
+    $('#controls a').css('color', fg);
+    $('#header').css('color', fg);
+    $('#header').css('background', bg);
+  };
+
+  var cycle_colors = function() {
+    current_color = (current_color + 1) % colors.length;
+    set_colors(colors[current_color][0], colors[current_color][1]);
+  };
+
+  var random_colors = function() {
+    var r = Math.floor(Math.random() * 16);
+    var g = Math.floor(Math.random() * 16);
+    var b = Math.floor(Math.random() * 16);
+
+    var fg = '#eee';
+    var bg = '#' + r.toString(16) + g.toString(16) + b.toString(16);
+
+    var a = 1 - (0.299 * r + 0.587 * g + 0.114 * b) / 16;
+
+    if (a < 0.5) fg = '#333';
+    else fg = '#eee';
+
+    set_colors(fg, bg);
+  };
+
   $('#play').click(function(e) {
     e.preventDefault();
 
@@ -40,6 +81,12 @@ $(function() {
     } else if (e.which == 34) {
       e.preventDefault();
       $('#skip').click();
+    } else if (e.which == 67) {
+      e.preventDefault();
+      cycle_colors();
+    } else if (e.which == 82) {
+      e.preventDefault();
+      random_colors();
     }
   });
 
