@@ -24,10 +24,9 @@ $(function() {
     if (a < 0.5) fg = '#333';
     else fg = '#eee';
 
-    $('#controls a').css('color', fg);
-    $('#header').css('color', fg);
-    $('#header').css('background', bg);
-    $('#volume p').css('background', fg);
+    $('#header').animate( {'background-color': bg, 'color': fg}, 1000);
+    $('#controls a').animate({'color': fg}, 1000);
+    $('#volume p').animate({'background-color': fg}, 1000);
   };
 
   var cycle_colors = function() {
