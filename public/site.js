@@ -30,9 +30,9 @@ $(function() {
       hash = (string.charCodeAt(i) + (hash << 4) - hash) % 1024;
     }
 
-    var r = ((hash & 0x700) >> 8).toString(16);
-    var g = ((hash & 0x070) >> 4).toString(16);
-    var b = ((hash & 0x007) >> 0).toString(16);
+    var r = (((hash & 0x700) >> 8) + 4).toString(16);
+    var g = (((hash & 0x070) >> 4) + 4).toString(16);
+    var b = (((hash & 0x007) >> 0) + 4).toString(16);
 
     return '#' + r + g + b;
   };
