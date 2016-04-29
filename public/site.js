@@ -9,12 +9,7 @@ $(function() {
     }
   }
 
-  var colors = [ '#df0', '#eab', '#b22', '#2b2', '#22b', '#222', '#27c' ];
-  var current_color = 0;
-
   var set_colors = function(bg) {
-    console.log('Color ' + bg);
-
     var r = parseInt(bg[1], 16);
     var g = parseInt(bg[2], 16);
     var b = parseInt(bg[3], 16);
@@ -29,16 +24,17 @@ $(function() {
     $('#volume p').animate({'background-color': fg}, 1000);
   };
 
-  var cycle_colors = function() {
-    current_color = (current_color + 1) % colors.length;
-    set_colors(colors[current_color]);
-  };
+  var color_from_string = function(string) {
+    var hash = 0;
+    for (var i = 0; i < string.length; ++i) {
+      hash = (string.charCodeAt(i) + (hash << 4) - hash) % 1024;
+    }
 
-  var random_colors = function() {
-    var r = Math.floor(Math.random() * 16).toString(16);
-    var g = Math.floor(Math.random() * 16).toString(16);
-    var b = Math.floor(Math.random() * 16).toString(16);
-    set_colors('#' + r + g + b);
+    var r = ((hash & 0x700) >> 8).toString(16);
+    var g = ((hash & 0x070) >> 4).toString(16);
+    var b = ((hash & 0x007) >> 0).toString(16);
+
+    return '#' + r + g + b;
   };
 
   $('#play').click(function(e) {
@@ -72,12 +68,6 @@ $(function() {
     } else if (e.which == 34) { // page down
       e.preventDefault();
       $('#skip').click();
-    } else if (e.which == 67) { // c
-      e.preventDefault();
-      cycle_colors();
-    } else if (e.which == 78) { // n
-      e.preventDefault();
-      random_colors();
     }
   });
 
@@ -135,7 +125,8 @@ $(function() {
         var album = data.Album || '<em>Unknown Album</em>';
         var title = data.Title || '<em>Untitled</em>';
 
-        random_colors();
+        var color = color_from_string(title);
+        set_colors(color);
 
         $('#metadata').animate({ opacity: 0 }, 1000, function() {
           $('#metadata').attr('title', album + ' - ' + title);
