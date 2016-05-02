@@ -9,32 +9,33 @@ $(function() {
     }
   }
 
-  var set_colors = function(bg) {
-    var r = parseInt(bg[1], 16);
-    var g = parseInt(bg[2], 16);
-    var b = parseInt(bg[3], 16);
+  var set_color = function(color) {
+    var brightness = 1 - (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()) / 256;
+    var text = brightness < 0.5 ? '#333' : '#eee';
 
-    var a = 1 - (0.299 * r + 0.587 * g + 0.114 * b) / 16;
-    var fg;
-    if (a < 0.5) fg = '#333';
-    else fg = '#eee';
-
-    $('#header').animate( {'background-color': bg, 'color': fg}, 1000);
-    $('#controls a').animate({'color': fg}, 1000);
-    $('#volume p').animate({'background-color': fg}, 1000);
+    $('#header').animate( {'background-color': color, 'color': text}, 1000);
+    $('#controls a').animate({'color': text}, 1000);
+    $('#volume p').animate({'background-color': text}, 1000);
   };
 
-  var color_from_string = function(string) {
-    var hash = 0;
-    for (var i = 0; i < string.length; ++i) {
-      hash = (string.charCodeAt(i) + (hash << 4) - hash) % 1024;
+  var song_color = function(album, title) {
+    var hue = 0;
+    for (var i = 0; i < album.length; ++i) {
+      hue = (album.charCodeAt(i) + (hue << 4) - hue) % 360;
     }
 
-    var r = (((hash & 0x700) >> 8) + 4).toString(16);
-    var g = (((hash & 0x070) >> 4) + 4).toString(16);
-    var b = (((hash & 0x007) >> 0) + 4).toString(16);
+    var lightness = 0;
+    var saturation = 0;
+    for (var i = 0; i < title.length; ++i) {
+      lightness = (title.charCodeAt(i) + (lightness << 4) - lightness) % 60;
+      saturation = (title.charCodeAt(i) + (saturation << 5) - saturation) % 40;
+    }
 
-    return '#' + r + g + b;
+    return jQuery.Color({
+      hue: hue,
+      saturation: (saturation + 60) / 100,
+      lightness: (lightness + 20) / 100,
+    });
   };
 
   $('#play').click(function(e) {
@@ -125,8 +126,7 @@ $(function() {
         var album = data.Album || '<em>Unknown Album</em>';
         var title = data.Title || '<em>Untitled</em>';
 
-        var color = color_from_string(title);
-        set_colors(color);
+        set_color(song_color(album, title));
 
         $('#metadata').animate({ opacity: 0 }, 1000, function() {
           $('#metadata').attr('title', album + ' - ' + title);
