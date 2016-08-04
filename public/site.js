@@ -110,7 +110,7 @@ $(function() {
     image.attr('alt', 'Album Art');
     image.addClass('thumb');
 
-    var item = $('<li></li>');
+    var item = $('<li id="' + data.uri + '"></li>');
     item.append(image);
     item.append(album + '<br>' + title);
 
@@ -125,6 +125,7 @@ $(function() {
 
         var album = data.Album || '<em>Unknown Album</em>';
         var title = data.Title || '<em>Untitled</em>';
+        var current = data.uri;
 
         set_color(song_color(album, title));
 
@@ -138,17 +139,31 @@ $(function() {
           $('#metadata').animate({ opacity: 1 }, 1000);
         });
 
+        // TODO decouple playlist changes from song changes
         $.get('/playlist', function(data) {
-          var item = make_song_item(data[data.length - 1]);
-          $('#playlist').prepend(item);
-          item.animate({ opacity: 1 }, 1000);
+          var i = 0;
+          var playlist = $('#playlist');
+          var items = playlist.children();
 
-          $('#playlist li:last-child').animate({ opacity: 0 }, 1000, function() {
-            $('#playlist li:last-child').remove();
-          });
+          for (var j = items.length - 1; j >= 0; --j) {
+            if (i >= data.length) break;
+            if (items[j].id == data[i].uri) {
+              ++i;
+            } else {
+              console.log("Removing item " + items[j].id);
+              $(items[j]).animate({opacity:0},1000,function(){$(items[j]).remove();});
+            }
+          }
+
+          for (; i < data.length; ++i) {
+            console.log("Adding item " + data[i].uri);
+            var item = make_song_item(data[i]);
+            item.animate({ opacity: 1 }, 1000);
+            playlist.prepend(item);
+          }
 
           $('#playlist li.active').removeClass('active');
-          $('#playlist li:nth-child(2)').addClass('active');
+          $(document.getElementById(current)).addClass('active');
         });
       }
     });
@@ -156,12 +171,10 @@ $(function() {
 
   $.get('/playlist', function(data) {
     var playlist = $('#playlist');
-    for (var i = data.length - 2; i >= 0; --i) {
+    for (var i = 0; i < data.length; ++i) {
       var item = make_song_item(data[i]);
-      if (i == data.length - 2) item.addClass('active');
-      playlist.append(item);
-      item.animate({ opacity: 1 }, 1000);
+      item.css('opacity', 1);
+      playlist.prepend(item);
     }
-    playlist.append('<li></li>');
   });
 });
