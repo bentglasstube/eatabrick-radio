@@ -151,7 +151,7 @@ $(function() {
               ++i;
             } else {
               console.log("Removing item " + items[j].id);
-              $(items[j]).animate({opacity:0},1000,function(){$(items[j]).remove();});
+              $(items[j]).animate({opacity:0}, 1000, function(){ this.remove(); });
             }
           }
 
