@@ -3,7 +3,7 @@ $(function() {
 
   var set_page_title = function() {
     if (playing) {
-      document.title = $('#title').text();
+      document.title = 'eatabrick radio - ' + $('#title').text();
     } else {
       document.title = 'eatabrick radio';
     }
