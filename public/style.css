@@ -72,6 +72,9 @@
   border-top: 1px solid #bbb;
   padding: 5px 0;
   opacity: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #playlist li:first-child {
