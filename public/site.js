@@ -66,9 +66,15 @@ $(function() {
     if (e.which == 32) {  // space
       e.preventDefault();
       $('#play').click();
-    } else if (e.which == 34) { // page down
+    } else if (e.which == 39) { // right arrow
       e.preventDefault();
       $('#skip').click();
+    } else if (e.which == 38) { // up arrow
+      e.preventDefault();
+      set_volume(get_volume() + 0.05);
+    } else if (e.which == 40) { // down arrow
+      e.preventDefault();
+      set_volume(get_volume() - 0.05);
     }
   });
 
@@ -84,6 +90,9 @@ $(function() {
   var set_volume = function(volume) {
     $('#radio')[0].volume = volume;
     $('#volume p').css('width', volume * 100 + '%');
+  };
+  var get_volume = function() {
+    return $('#radio')[0].volume;
   };
 
   $('#volume').mousedown(function(e) {
