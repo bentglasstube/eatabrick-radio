@@ -1,8 +1,8 @@
 $(function() {
-  var playing = false;
+  var state = 'stopped';
 
   var set_page_title = function() {
-    if (playing) {
+    if (state == 'playing') {
       document.title = 'eatabrick radio - ' + $('#title').text();
     } else {
       document.title = 'eatabrick radio';
@@ -38,28 +38,50 @@ $(function() {
     });
   };
 
+  var set_state = function(new_state) {
+    state = new_state;
+    var icon = '';
+    if (state == 'playing') {
+      icon = 'fa fa-stop';
+    } else if (state == 'stopped') {
+      icon = 'fa fa-play';
+    } else if (state == 'loading') {
+      icon = 'fa fa-spinner fa-spin';
+    }
+    $('#play i').attr('class', icon);
+  };
+
   $('#play').click(function(e) {
     e.preventDefault();
 
     var audio = $('#radio')[0];
 
-    if (playing) {
+    if (state == 'playing') {
       audio.pause();
-
-      playing = false;
-      $('#play i').removeClass('fa-stop');
-      $('#play i').addClass('fa-play');
-    } else {
+      set_state('stopped');
+    } else if (state == 'stopped') {
       audio.load();
       audio.play();
-
-      // TODO wait to set playing until actually playing
-      playing = true;
-      $('#play i').removeClass('fa-play');
-      $('#play i').addClass('fa-stop');
+      set_state('loading');
     }
 
     set_page_title();
+  });
+
+  $('#radio').bind('playing', function() {
+    set_state('playing');
+  });
+
+  $('#radio').bind('error', function(e) {
+    // TODO show error in UI
+
+    console.log('Audio error: ' + e.target.error);
+    set_state('stopped');
+  });
+
+  $('#radio').bind('ended', function() {
+    console.log('Audio ended');
+    set_state('stopped');
   });
 
   $(document).keydown(function(e) {
