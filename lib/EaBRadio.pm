@@ -79,11 +79,20 @@ get '/art' => sub {
   redirect $_art{$album, $artist};
 };
 
+our $last_skip = 0;
 post '/skip' => sub {
-  mpd->next;
-
   content_type 'application/json';
-  to_json({ status => 'success' });
+
+  if (time - $last_skip < 10) {
+    to_json({
+        status => 'error',
+        message => 'Last skip was too recent, please calm down.'
+      });
+  } else {
+    $last_skip = time;
+    mpd->next;
+    to_json({ status => 'success' });
+  }
 };
 
 1;

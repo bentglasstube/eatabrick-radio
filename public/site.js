@@ -51,6 +51,18 @@ $(function() {
     $('#play i').attr('class', icon);
   };
 
+  var show_alert = function(message, timeout) {
+    var a = $('<div/>');
+    a.addClass('alert alert-warning fade');
+    a.text(message);
+    a.insertBefore('#playlist');
+    a.animate({opacity: 1}, function() {
+      setTimeout(function() {
+        a.animate({opacity: 0}, function() { a.remove(); });
+      }, timeout * 1000);
+    });
+  };
+
   $('#play').click(function(e) {
     e.preventDefault();
 
@@ -73,9 +85,7 @@ $(function() {
   });
 
   $('#radio').bind('error', function(e) {
-    // TODO show error in UI
-
-    console.log('Audio error: ' + e.target.error);
+    show_alert('Audio error: ' + e.target.error);
     set_state('stopped');
   });
 
@@ -104,7 +114,9 @@ $(function() {
     e.preventDefault();
 
     $.post('/skip', null, function(data) {
-      if (data.status == 'error') alert(data.message);
+      if (data.status == 'error') {
+        show_alert(data.message, 5);
+      }
     });
   });
 
