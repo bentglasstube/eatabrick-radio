@@ -23,11 +23,11 @@
         </div>
         <div class="col-sm-4" id="controls">
           <a>
-            <i id="volicon" class="fa fa-volume-up"></i>
+            <i id="volicon" class="fa fa-fw fa-volume-up"></i>
             <div id="volume"><p></p></div>
           </a>
-          <a href="#play" id="play"><i class="fa fa-play"></i></a>
-          <a href="#skip" id="skip"><i class="fa fa-forward"></i></a>
+          <a href="#play" id="play"><i class="fa fa-fw fa-play"></i></a>
+          <a href="#skip" id="skip"><i class="fa fa-fw fa-forward"></i></a>
         </div>
       </div>
     </div>

@@ -40,13 +40,16 @@ $(function() {
 
   var set_state = function(new_state) {
     state = new_state;
-    var icon = '';
+    var i = $('#play i');
     if (state == 'playing') {
-      icon = 'fa fa-stop';
+      i.removeClass('fa-spin fa-play fa-cog');
+      i.addClass('fa-stop');
     } else if (state == 'stopped') {
-      icon = 'fa fa-play';
+      i.removeClass('fa-spin fa-stop fa-cog');
+      i.addClass('fa-play');
     } else if (state == 'loading') {
-      icon = 'fa fa-spinner fa-spin';
+      i.removeClass('fa-play fa-stop');
+      i.addClass('fa-spin fa-cog');
     }
     $('#play i').attr('class', icon);
   };
