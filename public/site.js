@@ -51,7 +51,6 @@ $(function() {
       i.removeClass('fa-play fa-stop');
       i.addClass('fa-spin fa-cog');
     }
-    $('#play i').attr('class', icon);
   };
 
   var show_alert = function(message, timeout) {
