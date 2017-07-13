@@ -97,16 +97,16 @@ $(function() {
   });
 
   $(document).keydown(function(e) {
-    if (e.which == 32) {  // space
+    if (e.key == ' ') {
       e.preventDefault();
       $('#play').click();
-    } else if (e.which == 39) { // right arrow
+    } else if (e.key == 'ArrowRight') {
       e.preventDefault();
       $('#skip').click();
-    } else if (e.which == 38) { // up arrow
+    } else if (e.key == 'ArrowUp') {
       e.preventDefault();
       set_volume(get_volume() + 0.05);
-    } else if (e.which == 40) { // down arrow
+    } else if (e.key == 'ArrowDown') {
       e.preventDefault();
       set_volume(get_volume() - 0.05);
     }
