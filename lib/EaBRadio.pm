@@ -10,17 +10,10 @@ use warnings;
 
 our $VERSION = '0.1';
 
-# TODO make dynamic
-my $HOST = 'master.radio.eatabrick.org';
-
 # cache mpd connection
 my $mpd = undef;
 sub mpd {
-  unless ($mpd) {
-    debug "Opening new connection to $HOST";
-    $mpd = Net::MPD->connect($HOST)
-  }
-
+  $mpd //= Net::MPD->connect($ENV{MPD_HOST});
   $mpd->ping;
   $mpd->update_status;
   return $mpd;
@@ -32,7 +25,10 @@ get '/' => sub {
 
 get '/listen.*' => sub {
   my ($ext) = splat;
-  redirect "http://$HOST:8000/radio.$ext";
+  my $host = $ENV{MPD_HOST};
+  $host =~ s/^.*?@//;
+  $host =~ s/:.*?$//;
+  redirect "http://$host:8000/radio.$ext";
 };
 
 get '/metadata' => sub {
