@@ -1,8 +1,8 @@
 package EaBRadio;
 use Dancer ':syntax';
 
-use Net::MPD;
 use LWP::UserAgent;
+use Net::MPD;
 
 use utf8;
 use strict;
@@ -75,6 +75,16 @@ get '/art' => sub {
   redirect $_art{$album, $artist};
 };
 
+get '/search' => sub {
+  my $query = param('q');
+
+  my @results = $mpd->search(Album => $query);
+  my %albums = map { $_->{Album} => 1 } @results;
+
+  content_type 'application/json';
+  to_json([sort keys %albums]);
+};
+
 our $last_skip = 0;
 post '/skip' => sub {
   content_type 'application/json';
@@ -89,6 +99,12 @@ post '/skip' => sub {
     mpd->next;
     to_json({ status => 'success' });
   }
+};
+
+post '/queue' => sub {
+  content_type 'application/json';
+  mpd->find_add(Album => param('album'));
+  to_json({ status => 'success' });
 };
 
 1;

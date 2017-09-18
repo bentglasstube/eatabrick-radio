@@ -97,6 +97,9 @@ $(function() {
   });
 
   $(document).keydown(function(e) {
+    // ignore keys if typing into input
+    if ($(e.target).is('input')) return;
+
     if (e.key == ' ') {
       e.preventDefault();
       $('#play').click();
@@ -162,6 +165,34 @@ $(function() {
     return item;
   };
 
+  var update_playlist = function(current) {
+    $.get('/playlist', function(data) {
+      var i = 0;
+      var playlist = $('#playlist');
+      var items = playlist.children();
+
+      for (var j = items.length - 1; j >= 0; --j) {
+        if (i >= data.length) break;
+        if (items[j].id == data[i].uri) {
+          ++i;
+        } else {
+          console.log("Removing item " + items[j].id);
+          $(items[j]).animate({opacity:0}, 1000, function(){ this.remove(); });
+        }
+      }
+
+      for (; i < data.length; ++i) {
+        console.log("Adding item " + data[i].uri);
+        var item = make_song_item(data[i]);
+        item.animate({ opacity: 1 }, 1000);
+        playlist.prepend(item);
+      }
+
+      $('#playlist li.active').removeClass('active');
+      $(document.getElementById(current)).addClass('active');
+    });
+  };
+
   var song_id;
   setInterval(function() {
     $.get('/metadata', function(data) {
@@ -170,7 +201,6 @@ $(function() {
 
         var album = data.Album || '<em>Unknown Album</em>';
         var title = data.Title || '<em>Untitled</em>';
-        var current = data.uri;
 
         set_color(song_color(album, title));
 
@@ -184,42 +214,37 @@ $(function() {
           $('#metadata').animate({ opacity: 1 }, 1000);
         });
 
-        // TODO decouple playlist changes from song changes
-        $.get('/playlist', function(data) {
-          var i = 0;
-          var playlist = $('#playlist');
-          var items = playlist.children();
-
-          for (var j = items.length - 1; j >= 0; --j) {
-            if (i >= data.length) break;
-            if (items[j].id == data[i].uri) {
-              ++i;
-            } else {
-              console.log("Removing item " + items[j].id);
-              $(items[j]).animate({opacity:0}, 1000, function(){ this.remove(); });
-            }
-          }
-
-          for (; i < data.length; ++i) {
-            console.log("Adding item " + data[i].uri);
-            var item = make_song_item(data[i]);
-            item.animate({ opacity: 1 }, 1000);
-            playlist.prepend(item);
-          }
-
-          $('#playlist li.active').removeClass('active');
-          $(document.getElementById(current)).addClass('active');
-        });
+        update_playlist(data.uri);
       }
     });
   }, 1000);
 
-  $.get('/playlist', function(data) {
-    var playlist = $('#playlist');
-    for (var i = 0; i < data.length; ++i) {
-      var item = make_song_item(data[i]);
-      item.css('opacity', 1);
-      playlist.prepend(item);
+  update_playlist();
+  // $.get('/playlist', function(data) {
+  //   var playlist = $('#playlist');
+  //   for (var i = 0; i < data.length; ++i) {
+  //     var item = make_song_item(data[i]);
+  //     item.css('opacity', 1);
+  //     playlist.prepend(item);
+  //   }
+  // });
+
+  var albums = new Bloodhound({
+    datumTokenizer: Bloodhound.tokenizers.whitespace,
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    local: [],
+    remote: {
+      url: 'search?q=%QUERY',
+      wildcard: '%QUERY'
     }
+  });
+
+  $('#q.typeahead').typeahead(null, { name: 'albums', source: albums });
+  $('#q.typeahead').bind('typeahead:select', function(e, suggestion) {
+    console.log('Queue album "' + suggestion + '"');
+    $.post('/queue', { album: suggestion }, function(data) {
+      update_playlist();
+      $('#q.typeahead').val('');
+    });
   });
 });
