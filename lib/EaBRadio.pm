@@ -103,8 +103,13 @@ post '/skip' => sub {
 
 post '/queue' => sub {
   content_type 'application/json';
-  mpd->find_add(Album => param('album'));
-  to_json({ status => 'success' });
+
+  if (my $album = param('album')) {
+    mpd->find_add(Album => $album);
+    to_json({ status => 'success' });
+  } else {
+    to_json({ status => 'error', message => 'No album provided' });
+  }
 };
 
 1;
