@@ -6,9 +6,7 @@
   <div class="col-sm-8">
     <h1>Playlist</h1>
 
-    <form method="post" action="queue" class="form-inline">
-      <input class="typeahead form-control" id="q" name="q" placeholder="Album Search">
-    </form>
+    <input class="typeahead form-control" id="q" name="q" placeholder="Album Search">
 
     <ol class="list-unstyled" id="playlist"></ol>
   </div>
