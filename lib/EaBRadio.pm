@@ -79,7 +79,7 @@ get '/search' => sub {
   my $query = param('q');
 
   my @results = $mpd->search(Album => $query);
-  my %albums = map { $_->{Album} => 1 } @results;
+  my %albums = map { $_->{Album} => 1 } grep { $_->{Album} } @results;
 
   content_type 'application/json';
   to_json([sort keys %albums]);
