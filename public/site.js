@@ -82,6 +82,20 @@ $(function() {
     set_page_title();
   });
 
+  $('#radio').bind('pause', function() {
+    set_state('stopped');
+  });
+
+  $('#radio').bind('play', function() {
+    if (state == 'stopped') {
+      var audio = $('#radio')[0];
+      audio.pause();
+      audio.load();
+      audio.play();
+      set_state('loading');
+    }
+  });
+
   $('#radio').bind('playing', function() {
     set_state('playing');
   });
