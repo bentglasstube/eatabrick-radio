@@ -163,18 +163,23 @@ $(function() {
   });
 
   var make_song_item = function(data) {
-    var album = data.Album || '<em>Unknown Album</em>';
-    var artist = data.Artist || '<em>Unknown Artist</em>';
-    var title = data.Title || '<em>Untitled</em>';
-
-    var image = $('<img>');
-    image.attr('src', '/art?album=' + album + '&artist=' + artist);
-    image.attr('alt', 'Album Art');
-    image.addClass('thumb');
-
     var item = $('<li id="' + data.uri + '"></li>');
-    item.append(image);
-    item.append(album + '<br>' + title);
+
+    if (data.uri.match(/^calls\//)) {
+      item.append('Station ID - ' + data.Title);
+    } else {
+      var album = data.Album || '<em>Unknown Album</em>';
+      var artist = data.Artist || '<em>Unknown Artist</em>';
+      var title = data.Title || '<em>Untitled</em>';
+
+      var image = $('<img>');
+      image.attr('src', '/art?album=' + album + '&artist=' + artist);
+      image.attr('alt', 'Album Art');
+      image.addClass('thumb');
+
+      item.append(image);
+      item.append(album + '<br>' + title);
+    }
 
     return item;
   };
